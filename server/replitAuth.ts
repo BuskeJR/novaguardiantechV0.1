@@ -20,6 +20,30 @@ async function setupReplit(app: Express) {
     return;
   }
 
+  // Create demo user for development
+  if (process.env.NODE_ENV !== "production") {
+    try {
+      const existingUser = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, "demo-user"))
+        .limit(1);
+
+      if (existingUser.length === 0) {
+        await db.insert(users).values({
+          id: "demo-user",
+          email: "demo@example.com",
+          firstName: "Demo",
+          lastName: "User",
+          role: "admin",
+        });
+        console.log("Demo user created");
+      }
+    } catch (err) {
+      console.error("Failed to create demo user:", err);
+    }
+  }
+
   // Simple OIDC endpoints (well-known from Replit)
   const authorizationURL = `${ISSUER_URL}/authorize`;
   const tokenURL = `${ISSUER_URL}/token`;
@@ -125,71 +149,85 @@ async function setupReplit(app: Express) {
   app.use(passport.initialize());
   app.use(passport.session());
 
-  // Login route
-  app.get("/api/login", (req, res, next) => {
-    if (isReplitRequest(req)) {
-      // Direct Replit workspace login
-      const userId = req.get("X-Replit-User-Id");
-      const userEmail = req.get("X-Replit-User-Email") || undefined;
-      const userFirstName = req.get("X-Replit-User-Name") || undefined;
-      const userProfileImage = req.get("X-Replit-User-Profile-Image") || undefined;
+  // Development: Allow quick demo login without OAuth
+  if (process.env.NODE_ENV !== "production") {
+    app.get("/api/login", (req, res, next) => {
+      // Auto-login as demo user in development
+      const demoUser = { id: "demo-user" };
+      req.login(demoUser, (err) => {
+        if (err) {
+          return res.status(500).json({ error: "Login failed" });
+        }
+        res.redirect("/");
+      });
+    });
+  } else {
+    // Production: Use OAuth2 flow
+    app.get("/api/login", (req, res, next) => {
+      if (isReplitRequest(req)) {
+        // Direct Replit workspace login
+        const userId = req.get("X-Replit-User-Id");
+        const userEmail = req.get("X-Replit-User-Email") || undefined;
+        const userFirstName = req.get("X-Replit-User-Name") || undefined;
+        const userProfileImage = req.get("X-Replit-User-Profile-Image") || undefined;
 
-      if (!userId) {
-        return res.status(401).send("Unauthorized");
-      }
+        if (!userId) {
+          return res.status(401).send("Unauthorized");
+        }
 
-      // Upsert user for Replit workspace
-      db.select()
-        .from(users)
-        .where(eq(users.id, userId))
-        .limit(1)
-        .then((existingUsers) => {
-          if (existingUsers.length > 0) {
-            // Update
-            return db
-              .update(users)
-              .set({
-                email: userEmail,
-                firstName: userFirstName,
-                profileImageUrl: userProfileImage,
-                updatedAt: new Date(),
-              })
-              .where(eq(users.id, userId))
-              .returning();
-          } else {
-            // Insert
-            return db
-              .insert(users)
-              .values({
-                id: userId,
-                email: userEmail,
-                firstName: userFirstName,
-                profileImageUrl: userProfileImage,
-                role: "user",
-              })
-              .returning();
-          }
-        })
-        .then(([user]) => {
-          req.login(user, (err) => {
-            if (err) {
-              return res.status(500).send("Login failed");
+        // Upsert user for Replit workspace
+        db.select()
+          .from(users)
+          .where(eq(users.id, userId))
+          .limit(1)
+          .then((existingUsers) => {
+            if (existingUsers.length > 0) {
+              // Update
+              return db
+                .update(users)
+                .set({
+                  email: userEmail,
+                  firstName: userFirstName,
+                  profileImageUrl: userProfileImage,
+                  updatedAt: new Date(),
+                })
+                .where(eq(users.id, userId))
+                .returning();
+            } else {
+              // Insert
+              return db
+                .insert(users)
+                .values({
+                  id: userId,
+                  email: userEmail,
+                  firstName: userFirstName,
+                  profileImageUrl: userProfileImage,
+                  role: "user",
+                })
+                .returning();
             }
-            res.redirect("/");
+          })
+          .then(([user]) => {
+            req.login(user, (err) => {
+              if (err) {
+                return res.status(500).send("Login failed");
+              }
+              res.redirect("/");
+            });
+          })
+          .catch((err) => {
+            console.error("User upsert error:", err);
+            res.status(500).send("Internal server error");
           });
-        })
-        .catch((err) => {
-          console.error("User upsert error:", err);
-          res.status(500).send("Internal server error");
-        });
-    } else {
-      // OAuth2 flow for deployed apps
-      passport.authenticate("replit", {
-        successReturnToOrRedirect: "/",
-        failureRedirect: "/",
-      })(req, res, next);
-    }
-  });
+      } else {
+        // OAuth2 flow for deployed apps
+        passport.authenticate("replit", {
+          successReturnToOrRedirect: "/",
+          failureRedirect: "/",
+        })(req, res, next);
+      }
+    });
+  }
 
   // OAuth callback
   app.get(
