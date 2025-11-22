@@ -152,9 +152,9 @@ async function setupReplit(app: Express) {
   // Development: Allow quick demo login without OAuth
   if (process.env.NODE_ENV !== "production") {
     app.get("/api/login", (req, res, next) => {
-      // Auto-login as demo user in development
-      const demoUser = { id: "demo-user" };
-      req.login(demoUser, (err) => {
+      // Allow specifying user via query param for testing
+      const userId = req.query.user as string || "demo-user";
+      req.login({ id: userId }, (err) => {
         if (err) {
           return res.status(500).json({ error: "Login failed" });
         }
