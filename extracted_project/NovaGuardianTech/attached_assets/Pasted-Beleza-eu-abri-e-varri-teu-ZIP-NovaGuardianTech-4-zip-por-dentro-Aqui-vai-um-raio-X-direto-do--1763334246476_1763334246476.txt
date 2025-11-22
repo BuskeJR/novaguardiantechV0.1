@@ -1,0 +1,183 @@
+Beleza, eu abri e varri teu ZIP “NovaGuardianTech (4).zip” por dentro. Aqui vai um raio-X direto do que falta (e o que está quebrando a execução hoje), com prioridade e caminhos exatos.
+
+Visão geral
+
+O repositório está organizado em apps/web (frontend), apps/api (FastAPI), infra (dnsdist/Pi-hole) e arquivos de raiz (docker-compose.yml, .env.example, Makefile).
+
+Não está funcional porque há muitos arquivos truncados com ... (placeholders) e também arquivos interrompidos no meio (terminam em meia palavra/linha).
+
+Contagem: 46 arquivos no projeto têm .... No frontend, 18 arquivos estão com ...; na API e infra, vários arquivos críticos estão incompletos (mesmo quando não aparecem ..., o conteúdo para no meio).
+
+O que falta (e/ou está quebrado) — por área
+✅ Estrutura (ok como base)
+
+apps/web/, apps/api/, infra/, docker-compose.yml, Makefile, .env.example: a intenção está certa.
+
+Tecnologias compatíveis com o objetivo (React/Vite + FastAPI/Postgres + dnsdist + Pi-hole).
+
+🚨 FRONTEND (apps/web) — P0 (bloqueia build)
+
+Arquivos com ... (placeholders) ou conteúdo cortado que quebram o npm run dev:
+
+UI components:
+src/components/ui/Alert.jsx, Badge.jsx, Button.jsx, Card.jsx, Input.jsx, Select.jsx, Table.jsx, Textarea.jsx (todos com ...)
+
+Páginas:
+src/pages/Login.jsx, Domains.jsx, Whitelist.jsx, Users.jsx, Clients.jsx, PiholeInstances.jsx, Audit.jsx (com ...)
+
+Infra do front:
+src/lib/queryClient.js (cortado), src/lib/utils.js (com ...), src/lib/mockAuth.js (com ...)
+src/App.jsx (cortado no final), src/components/Layout.jsx (cortado; imports quebrados)
+
+Config: vite.config.js existe mas está cortado; jsconfig.json ok, mas precisa casar com alias @.
+
+👉 Falta:
+
+Substituir todos esses arquivos por versões completas e coerentes entre si.
+
+Garantir alias @ no Vite + jsconfig.json.
+
+Garantir React Query provider (QueryClientProvider) e hook de auth funcionando (pode ter modo mock via VITE_USE_MOCK=true até a API estar pronta).
+
+.env do web com:
+
+VITE_API_URL=http://localhost:8080
+VITE_USE_MOCK=true
+VITE_BRAND_NAME=NovaGuardianTech
+
+🚨 API (apps/api) — P0 (impede subir a API)
+
+Arquivos incompletos/truncados:
+
+main.py → termina em @ap (cortado).
+
+core/config.py → cortado (propriedades/CORS/etc. incompletos).
+
+migrations/env.py (Alembic) → cortado.
+
+routers/stats.py → termina em clients_count (cortado).
+
+routers/admin_pihole.py → tem ....
+
+Schemas com ...: schemas/client.py, schemas/domain_rule.py, schemas/ip_whitelist.py, schemas/location.py.
+
+👉 Falta:
+
+Completar main.py (CORS, include_routers, @app.get("/health") etc.).
+
+Completar core/config.py, core/database.py (SessionLocal/engine), core/security.py (hash de senha + JWT).
+
+Escrever models/schemas completos (users, clients, locations, pihole_instances, domain_rules, ip_whitelist, audit_logs).
+
+Implementar routers:
+
+auth (login/logout/me)
+
+domains (CRUD + paginação/filtros)
+
+whitelist (CRUD)
+
+dns (/dns/my-ip, /dns/apply?clientId= para acionar Pi-hole)
+
+users, clients, locations, stats, health
+
+Criar migration inicial (Alembic) e seed (tools/seed.py) para: admin, user demo, client demo, location demo, metadata do pihole demo.
+
+.env.example da API completo (incluindo CORS):
+
+API_PORT=8080
+JWT_SECRET=troque_este_segredo
+DATABASE_URL=postgresql+psycopg://novaguard:novaguard@db:5432/novaguard
+CORS_ORIGINS=http://localhost:5000
+
+🚨 INFRA (infra/, docker-compose.yml, Makefile, .env.example) — P0/P1
+
+infra/dnsdist/dnsdist.conf → truncado (pools/policies cortadas).
+
+infra/pihole/setup.sh → truncado.
+
+docker-compose.yml (raiz) → truncado (serviços cortam no meio: dnsdist→restart: u…).
+
+.env.example (raiz) → truncado (blocos de DB/JWT/ENV incompletos).
+
+Makefile → truncado (targets param no meio).
+
+👉 Falta:
+
+docker-compose.yml completo (serviços: postgres, api, dnsdist, pihole-demo e opcional web), volumes e healthchecks.
+
+dnsdist.conf completo: setLocal("0.0.0.0:5353"), pools, newServer, regra por IP de origem (ex.: 203.0.113.10 → pool demo), setVerbose, fallback.
+
+pihole/demo/env com:
+
+TZ=UTC
+WEBPASSWORD=TroqueSenhaPiHole!
+PIHOLE_DNS_1=1.1.1.1
+PIHOLE_DNS_2=8.8.8.8
+DNSMASQ_LISTENING=all
+
+
+.env.example (raiz) completo (API, Postgres, dnsdist, pihole, front):
+
+API_PORT=8080
+JWT_SECRET=troque_este_segredo
+
+POSTGRES_HOST=db
+POSTGRES_PORT=5432
+POSTGRES_DB=novaguard
+POSTGRES_USER=novaguard
+POSTGRES_PASSWORD=novaguard
+DATABASE_URL=postgresql+psycopg://novaguard:novaguard@db:5432/novaguard
+
+PUBLIC_IP_DEMO=203.0.113.10
+PIHOLE_DEMO_CONTAINER=pihole_cliente_demo
+DNSDIST_LISTEN_PORT_DEV=5353
+
+VITE_API_URL=http://localhost:8080
+VITE_USE_MOCK=false
+VITE_BRAND_NAME=NovaGuardianTech
+
+
+Makefile com alvos: dev, stop, logs, seed, dns-test, dns-status, clean.
+
+Prioridade sugerida (para ficar “rodando de verdade”)
+P0 — Fazer subir algo hoje
+
+Front em mock: substituir os 12–15 arquivos listados (UI + App + Layout + hooks) e garantir vite.config.js + jsconfig.json.
+
+Resultado: npm run dev abre painel e navega (Login → Dashboard).
+
+API mínima: completar main.py, core/*, models/schemas mínimos, auth, domains, whitelist, dns, stats, health; migration + seed.
+
+Resultado: uvicorn sobe e endpoints básicos respondem.
+
+Compose mínimo: docker-compose.yml com postgres+api (sem dnsdist/pihole ainda) para o front falar com a API real em dev.
+
+P1 — NXDOMAIN real (DNS)
+
+Completar dnsdist.conf, pihole/demo/env, tools/pihole_exec.py e routers/admin_pihole.py para executar docker exec pihole -b/-d e restartdns reload.
+
+Subir dnsdist :5353 e pihole-demo no compose; testar com:
+
+dig @127.0.0.1 -p 5353 instagram.com   # Esperado: NXDOMAIN após aplicar
+dig @127.0.0.1 -p 5353 google.com      # Esperado: resposta normal
+
+P2 — Produção/Operação
+
+.env produção, backups (pg_dump → S3/Spaces), firewall, whitelist por IP, guia “como apontar o roteador”, observabilidade.
+
+Em resumo (checklist do que FALTA corrigir/agregar)
+
+Substituir todos os arquivos do front com .../cortados (UI, páginas, App.jsx, Layout.jsx, queryClient.js, useAuth.jsx).
+
+Completar: apps/api/main.py, core/config.py, migrations/env.py, routers/stats.py, routers/admin_pihole.py, schemas com ....
+
+Criar/Finalizar: models, migrations iniciais, seed.
+
+Consertar: docker-compose.yml, infra/dnsdist/dnsdist.conf, infra/pihole/demo/env e (se usar) infra/pihole/setup.sh.
+
+Preencher: .env.example (raiz e API) com todas as variáveis.
+
+Reescrever Makefile com targets básicos.
+
+Testar: NXDOMAIN via dig/nslookup.

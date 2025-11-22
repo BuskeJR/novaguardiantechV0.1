@@ -1,0 +1,151 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database (development)
+  postgres:
+    image: postgres:16-alpine
+    container_name: novaguardian-postgres
+    environment:
+      POSTGRES_DB: novaguard
+      POSTGRES_USER: novaguard
+      POSTGRES_PASSWORD: novaguard
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U novaguard"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - novaguardian
+
+  # FastAPI Backend
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    container_name: novaguardian-api
+    environment:
+      DATABASE_URL: postgresql+psycopg://novaguard:novaguard@postgres:5432/novaguard
+      JWT_SECRET: ${JWT_SECRET:-development_secret_change_in_production}
+      API_PORT: 8080
+      API_HOST: 0.0.0.0
+      CORS_ORIGINS: http://localhost:5000,http://localhost:3000
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./apps/api:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    networks:
+      - novaguardian
+
+  # React Frontend
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+    container_name: novaguardian-web
+    environment:
+      VITE_API_URL: http://localhost:8080
+      VITE_USE_MOCK: "false"
+      VITE_BRAND_NAME: NovaGuardianTech
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./apps/web:/app
+      - /app/node_modules
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+    networks:
+      - novaguardian
+
+  # dnsdist - DNS routing based on source IP
+  dnsdist:
+    image: powerdns/dnsdist-18:latest
+    container_name: novaguardian-dnsdist
+    ports:
+      - "5353:5353/udp"
+      - "5353:5353/tcp"
+      - "8053:8053/tcp"
+    volumes:
+      - ./infra/dnsdist/dnsdist.conf:/etc/dnsdist/dnsdist.conf:ro
+    depends_on:
+      pihole-demo:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "dig", "+short", "@127.0.0.1", "-p", "5353", "google.com"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - novaguardian
+
+  # Pi-hole instance for demo client
+  pihole-demo:
+    image: pihole/pihole:latest
+    container_name: pihole-demo
+    hostname: pihole-demo
+    environment:
+      TZ: 'America/Sao_Paulo'
+      WEBPASSWORD: 'novaguardian123'
+      FTLCONF_LOCAL_IPV4: '172.20.0.10'
+      PIHOLE_DNS_: '1.1.1.1;8.8.8.8'
+      DNSMASQ_LISTENING: 'all'
+      DNSSEC: 'false'
+      REV_SERVER: 'false'
+      BLOCKING_ENABLED: 'true'
+    volumes:
+      - pihole_demo_etc:/etc/pihole
+      - pihole_demo_dnsmasq:/etc/dnsmasq.d
+    ports:
+      - "8081:80/tcp"
+    dns:
+      - 127.0.0.1
+      - 1.1.1.1
+    restart: unless-stopped
+    networks:
+      novaguardian:
+        ipv4_address: 172.20.0.10
+    cap_add:
+      - NET_ADMIN
+    healthcheck:
+      test: ["CMD", "dig", "+short", "@127.0.0.1", "pi.hole"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  postgres_data:
+    driver: local
+  pihole_demo_etc:
+    driver: local
+  pihole_demo_dnsmasq:
+    driver: local
+
+networks:
+  novaguardian:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

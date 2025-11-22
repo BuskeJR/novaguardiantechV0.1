@@ -1,0 +1,99 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: novaguardian-api-prod
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
+      JWT_EXPIRE_MINUTES: ${JWT_EXPIRE_MINUTES:-1440}
+      API_HOST: 0.0.0.0
+      API_PORT: 8080
+      API_RELOAD: "false"
+      CORS_ORIGINS: ${CORS_ORIGINS}
+      ENVIRONMENT: production
+      DATABASE_POOL_SIZE: ${DATABASE_POOL_SIZE:-10}
+      DATABASE_MAX_OVERFLOW: ${DATABASE_MAX_OVERFLOW:-20}
+      DOCKER_NETWORK: ${DOCKER_NETWORK:-novaguardian}
+    ports:
+      - "8080:8080"
+    networks:
+      - novaguardian
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: novaguardian-web-prod
+    ports:
+      - "5000:5000"
+    restart: unless-stopped
+    depends_on:
+      - api
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:5000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: novaguardian-postgres-prod
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-novaguard}
+      POSTGRES_USER: ${POSTGRES_USER:-novaguard}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data_prod:/var/lib/postgresql/data
+      - ./backups:/backups
+    networks:
+      - novaguardian
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-novaguard}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  dnsdist:
+    image: powerdns/dnsdist-18:latest
+    container_name: novaguardian-dnsdist-prod
+    ports:
+      - "5353:5353/udp"
+      - "8053:8053/tcp"
+    volumes:
+      - ./infra/dnsdist/dnsdist.conf:/etc/dnsdist/dnsdist.conf:ro
+    networks:
+      - novaguardian
+    restart: unless-stopped
+    depends_on:
+      - api
+
+volumes:
+  postgres_data_prod:
+    driver: local
+
+networks:
+  novaguardian:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

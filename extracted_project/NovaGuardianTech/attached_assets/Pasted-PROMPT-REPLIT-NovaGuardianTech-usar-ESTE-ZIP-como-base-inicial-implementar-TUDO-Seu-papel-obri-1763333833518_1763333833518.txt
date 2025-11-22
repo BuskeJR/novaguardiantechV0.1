@@ -1,0 +1,561 @@
+PROMPT REPLIT — NovaGuardianTech (usar ESTE ZIP como base inicial, implementar TUDO)
+Seu papel (obrigatório):
+
+Engenheiro Full-Stack + DevOps Sênior + Engenheiro de Redes (DNS).
+Explique como para dev júnior (passo a passo, didático).
+Sempre entregue ARQUIVOS COMPLETOS (nada de diffs) com caminhos exatos, comandos, .env, scripts, e testes.
+
+Idioma: Português-BR.
+
+Regras de Ouro (siga à risca)
+
+
+Uma única linha de execução (fases fixas):
+Fase A: Estudar ZIP + Hotfix Front →
+Fase B: API FastAPI + Postgres →
+Fase C: dnsdist + Pi-hole (demo) + Docker Compose + testes dig/nslookup →
+Fase D: Blueprint de Produção →
+Fase E: Observabilidade & Segurança.
+
+
+Formato OBRIGATÓRIO de cada resposta/entrega:
+
+
+ONDE ESTAMOS: (ex.: “Fase B • Passo 2/5”)
+
+
+O QUE ENTREGAREI AGORA: (bullets objetivos)
+
+
+ENTREGA: (arquivos COMPLETOS com caminhos + comandos + .env + saídas esperadas)
+
+
+PRÓXIMO PASSO: (1 linha)
+
+
+CHECKPOINT: (2–3 linhas recapitulando o que foi feito)
+
+
+
+
+Ultra-detalhismo: inclua caminhos exatos, conteúdo completo, comandos, variáveis .env, erros comuns e correções.
+
+
+Nunca se perder: se surgir incerteza, pare e escreva um bloco “RECAPI-TULAÇÃO RÁPIDA + DÚVIDA” (1–3 linhas) propondo um default seguro. Só então avance.
+
+
+Sem perguntas de confirmação para o básico: avance com suposições razoáveis (documente). Para decisões não triviais, use o bloco de recap+dúvida.
+
+
+Arquivos completos, nunca diffs. Se renomear algo, explique exatamente o que e por quê.
+
+
+Testes reais sempre que aplicável (ex.: dig/nslookup para DNS). Inclua critérios de aceite por fase.
+
+
+
+Contexto (IMPORTANTE)
+
+
+Vou anexar o ZIP inicial nova-guardian-tech-26441063.zip (ou “NovaGuardianTech.zip”). É o arquivo de partida (frontend React).
+
+
+Objetivo: evoluir para um SaaS de bloqueio DNS com:
+
+
+Frontend (do ZIP, corrigido)
+
+
+API externa (Python/FastAPI + Postgres)
+
+
+dnsdist na frente, roteando por IP de origem
+
+
+1 Pi-hole por cliente (nesta fase: 1 container “demo”)
+
+
+Docker Compose de dev com testes NXDOMAIN
+
+
+Backups (Postgres → S3/Spaces) e blueprint de produção
+
+
+
+
+
+Estrutura alvo do repositório
+Crie um monorepo com esta árvore (se algo já existir, mantenha e ajuste):
+NovaGuardianTech/
+  .env.example
+  README.md
+  Makefile
+  docker-compose.yml             # ou infra/docker-compose.yml
+
+  apps/
+    web/                         # (frontend do ZIP, corrigido)
+      package.json
+      vite.config.js
+      jsconfig.json / tsconfig.json
+      .env.example
+      src/
+        App.jsx
+        main.jsx / main.tsx
+        components/
+        pages/
+        lib/
+          api.js
+          queryClient.js
+          auth.js (ou useAuth.jsx)
+          validators.js
+          mock/ (opcional)
+        styles/
+
+    api/                         # (FastAPI completo)
+      pyproject.toml
+      alembic.ini
+      .env.example
+      src/
+        main.py
+        core/        (config, db, security)
+        models/      (*.py)
+        schemas/     (*.py)
+        repositories/*.py
+        services/    (auth, domain, pihole, dns_reload)
+        routers/     (auth, domains, whitelist, dns, users, clients, locations, health)
+        migrations/  (Alembic)
+      tools/
+        seed.py
+        pihole_exec.py
+
+  infra/
+    dnsdist/
+      dnsdist.conf.dev
+    pihole/
+      demo/
+        env
+        etc-pihole/       # volume
+        etc-dnsmasq.d/    # volume
+
+
+Fase A — Estudar o ZIP + Hotfix do Front (rodar dev sem erro)
+A1. Diagnóstico do ZIP (obrigatório):
+
+
+Liste a estrutura, libs, rotas, componentes, alias @, e pontos frágeis (ex.: arquivos com ..., imports quebrados, ausência do QueryClientProvider, etc.).
+
+
+A2. Hotfix Pack 01 (entregar ARQUIVOS COMPLETOS):
+
+
+apps/web/.env.example:
+VITE_API_URL=http://localhost:8080
+VITE_USE_MOCK=true
+VITE_BRAND_NAME=NovaGuardianTech
+
+
+
+apps/web/vite.config.js com alias @ correto e porta 5000.
+
+
+apps/web/jsconfig.json (ou tsconfig.json) com:
+{ "compilerOptions": { "baseUrl": ".", "paths": { "@/*": ["src/*"] } } }
+
+
+
+apps/web/src/lib/api.js: axios com Authorization: Bearer + tratamento 401 → /login.
+
+
+apps/web/src/lib/queryClient.js: instancia do QueryClient.
+
+
+apps/web/src/hooks/useAuth.jsx: contexto de auth com modo MOCK habilitável por VITE_USE_MOCK.
+
+
+Substituir componentes UI truncados (ex.: Button, Card, Alert, Badge) por versões completas e simples.
+
+
+apps/web/src/components/Layout.jsx: sem imports quebrados ./components/... → usar @/components/....
+
+
+apps/web/src/App.jsx: rotas mínimas (Login, Dashboard, Settings) com Route Guard.
+
+
+apps/web/src/pages/Login.jsx: login simples (mock friendly).
+
+
+apps/web/src/pages/Dashboard.jsx: status “Front OK / API pendente / DNS pendente”.
+
+
+apps/web/src/pages/Settings.jsx: placeholder.
+
+
+Remover todos os ... literais que quebrem build.
+
+
+Comandos (Front):
+cd apps/web
+npm install
+npm run dev
+# acessar http://localhost:5000
+# com VITE_USE_MOCK=true qualquer email/senha funciona
+
+Erros comuns & correções:
+
+
+“No QueryClient set…” → faltava QueryClientProvider (corrigido).
+
+
+“Cannot find module '@/…'” → alias não configurado (corrigido).
+
+
+Tela branca → quase sempre import errado ou ... no arquivo (removido/substituído).
+
+
+Critérios de aceite (Fase A):
+
+
+npm run dev sobe sem erros.
+
+
+Login (mock) → Dashboard OK.
+
+
+Navegação para Settings OK.
+
+
+
+Fase B — API Externa (FastAPI + Postgres)
+Arquitetura (pasta apps/api/):
+
+
+FastAPI (Python 3.11), SQLAlchemy, Alembic, psycopg, bcrypt, PyJWT
+
+
+Autenticação JWT (HttpOnly cookie ou Bearer em dev) + RBAC (ADMIN/USER)
+
+
+Camadas: routers/, services/, repositories/, models/, schemas/, core/ (config, db, security), migrations/.
+
+
+Modelagem mínima:
+
+
+users(id,name,email unique,password_hash,role,created_at,updated_at)
+
+
+clients(id,name,slug,is_active,created_at)
+
+
+locations(id,client_id,label,public_ip,is_active,created_at)
+
+
+pihole_instances(id,client_id,container_name,upstream_dns1,upstream_dns2,mode: NXDOMAIN|NULL,created_at)
+
+
+domain_rules(id,client_id,domain,kind: EXACT|REGEX,status: ACTIVE|INACTIVE,reason,created_by,created_at,updated_at)
+
+
+ip_whitelist(id,client_id,ip_address,label,created_by,created_at)
+
+
+audit_logs(id,actor_user_id,client_id,action,payload_json,created_at)
+
+
+Endpoints (contrato pro front):
+
+
+Auth: POST /auth/login, POST /auth/logout, GET /auth/me
+
+
+Domains: GET /domains?clientId=&search=&status=&page=&pageSize=, POST /domains, PATCH /domains/{id}, DELETE /domains/{id}
+
+
+Whitelist: GET /whitelist?clientId=, POST /whitelist, DELETE /whitelist/{id}
+
+
+DNS: GET /dns/my-ip, POST /dns/apply?clientId=
+
+
+Admin: GET/POST /users, GET /clients, GET/POST/DELETE /locations
+
+
+Entregue (ARQUIVOS COMPLETOS):
+
+
+apps/api/pyproject.toml com deps.
+
+
+apps/api/src/main.py com criação de app, middlewares (CORS), include_routers, exception handlers.
+
+
+apps/api/src/core/config.py (carregar .env, CORS_ORIGINS, DATABASE_URL, JWT_SECRET, API_PORT).
+
+
+apps/api/src/core/db.py (SessionLocal, Base, engine).
+
+
+apps/api/src/core/security.py (hash/verificação de senha, criação/validação JWT).
+
+
+apps/api/src/models/*.py (todas entidades).
+
+
+apps/api/src/schemas/*.py (Pydantic).
+
+
+apps/api/src/repositories/*.py e apps/api/src/services/*.py (lógica).
+
+
+apps/api/src/routers/*.py (auth, domains, whitelist, dns, users, clients, locations, health).
+
+
+apps/api/alembic.ini, apps/api/src/migrations/ com migration inicial.
+
+
+apps/api/.env.example:
+API_PORT=8080
+JWT_SECRET=troque_este_segredo
+
+POSTGRES_HOST=db
+POSTGRES_PORT=5432
+POSTGRES_DB=novaguard
+POSTGRES_USER=novaguard
+POSTGRES_PASSWORD=novaguard
+DATABASE_URL=postgresql+psycopg://novaguard:novaguard@db:5432/novaguard
+
+CORS_ORIGINS=http://localhost:5000
+
+
+
+apps/api/tools/seed.py (cria admin, user demo, client demo, location demo, pihole demo metadata).
+
+
+README (API) com modo Docker e sem Docker.
+
+
+Comandos (API local sem Docker, opcional):
+cd apps/api
+pip install -e .
+alembic upgrade head
+uvicorn src.main:app --reload --port 8080
+
+Critérios de aceite (Fase B):
+
+
+POST /auth/login e GET /auth/me funcionam.
+
+
+CRUDs de domain_rules e ip_whitelist funcionam.
+
+
+/dns/apply responde 200 { ok, appliedCount, tookMs } (ainda sem Pi-hole real).
+
+
+
+Fase C — dnsdist + Pi-hole (demo) + Docker Compose + Testes
+Arquitetura dev (infra/):
+
+
+dnsdist ouvindo :5353/udp,tcp no host.
+
+
+1 container Pi-hole demo: pihole_cliente_demo (rede Docker).
+
+
+dnsdist roteia por IP de origem (PUBLIC_IP_DEMO do .env) → pihole_cliente_demo:53.
+
+
+A API, ao Aplicar, executa no container do cliente via docker exec:
+
+
+pihole -b dominio.com (add)
+
+
+pihole -b -d dominio.com (remove)
+
+
+pihole restartdns reload (aplicar)
+
+
+
+
+Volumes persistentes: /etc/pihole e /etc/dnsmasq.d.
+
+
+Entregue (ARQUIVOS COMPLETOS):
+
+
+docker-compose.yml na raiz ou infra/docker-compose.yml com serviços:
+
+
+db (Postgres), api (FastAPI), dnsdist, pihole_cliente_demo, e opcionalmente web.
+
+
+
+
+infra/dnsdist/dnsdist.conf.dev com regra de roteamento por IP de origem.
+
+
+infra/pihole/demo/env:
+TZ=UTC
+WEBPASSWORD=TroqueSenhaPiHole!
+PIHOLE_DNS_1=1.1.1.1
+PIHOLE_DNS_2=8.8.8.8
+DNSMASQ_LISTENING=all
+
+
+
+.env.example (raiz):
+API_PORT=8080
+JWT_SECRET=troque_este_segredo
+
+POSTGRES_HOST=db
+POSTGRES_PORT=5432
+POSTGRES_DB=novaguard
+POSTGRES_USER=novaguard
+POSTGRES_PASSWORD=novaguard
+DATABASE_URL=postgresql+psycopg://novaguard:novaguard@db:5432/novaguard
+
+PUBLIC_IP_DEMO=203.0.113.10
+PIHOLE_DEMO_CONTAINER=pihole_cliente_demo
+DNSDIST_LISTEN_PORT_DEV=5353
+
+VITE_API_URL=http://localhost:8080
+VITE_USE_MOCK=false
+VITE_BRAND_NAME=NovaGuardianTech
+
+
+
+Comandos (Compose):
+# na raiz do repo
+cp .env.example .env
+docker compose up -d --build
+# aguarde saúde dos serviços
+
+Testes obrigatórios:
+
+
+No painel, adicione instagram.com como bloqueado → clique Aplicar (chama /dns/apply).
+
+
+Validação DNS:
+
+
+# macOS/Linux:
+dig @127.0.0.1 -p 5353 instagram.com     # Esperado: NXDOMAIN
+dig @127.0.0.1 -p 5353 google.com        # Esperado: resposta válida
+
+# Windows (PowerShell):
+nslookup instagram.com 127.0.0.1
+nslookup google.com 127.0.0.1
+
+Critérios de aceite (Fase C):
+
+
+Bloqueados retornam NXDOMAIN; não bloqueados resolvem normalmente.
+
+
+Reiniciar containers não perde dados (volumes ok).
+
+
+
+Fase D — Produção (blueprint)
+Entrega (documentar + scripts):
+
+
+Postgres gerenciado (RDS/DO/Render/Railway) + backups diários (pg_dump) em S3/Spaces com retenção (script tools/backup_postgres.sh).
+
+
+dnsdist + Pi-holes em Droplet/EC2 com firewall (abrir 53/udp,tcp; painel 443; admin restrito).
+
+
+Whitelist por cliente (IPs autorizados).
+
+
+Traefik (opcional) para HTTPS automático do painel.
+
+
+Guia “como apontar o roteador/PC” (com imagens/comandos).
+
+
+
+Fase E — Observabilidade & Segurança
+Entrega (documentar + manifestos):
+
+
+Prometheus + Grafana (QPS, cache hit, top domains).
+
+
+Rotação de logs (opcional envio para S3/Spaces).
+
+
+Pausa de bloqueios (liberar tudo por X minutos).
+
+
+Política de retenção de logs (ex.: 30 dias).
+
+
+Boas práticas de secrets (AWS Secrets Manager/Doppler).
+
+
+
+Makefile (alvos mínimos)
+Crie Makefile na raiz com:
+
+
+make dev → docker compose up -d --build
+
+
+make seed → docker compose exec api python -m tools.seed
+
+
+make logs → docker compose logs -f --tail=150
+
+
+make down → docker compose down -v
+
+
+
+Checklists Rápidos (cada fase)
+
+
+A (Front): compila, login (mock) → dashboard.
+
+
+B (API): login real ok, CRUDs ok, /dns/apply 200.
+
+
+C (DNS): NXDOMAIN para bloqueados, ok para demais.
+
+
+D/E: docs de produção, backups, observabilidade, segurança.
+
+
+
+Observações Replit
+
+
+Se Docker Compose não estiver disponível no workspace padrão, gere os arquivos mesmo assim (para deploy local/cloud) e rode API+Front sem Docker no Replit para dev (documente ambos os caminhos).
+
+
+Inclua scripts run/start no package.json (web) e comandos para a API (uvicorn).
+
+
+Documente onde ajustar ports se o Replit exigir portas específicas.
+
+
+
+PRIMEIRA AÇÃO DO AGENTE (agora)
+
+
+Peça o ZIP inicial se ainda não estiver anexado.
+
+
+Entregue a Fase A: Diagnóstico + Hotfix Pack 01 (arquivos completos) + comandos para subir o front e validação.
+
+
+PRÓXIMO PASSO: Começar Fase B (API FastAPI + Postgres) com arquivos completos, migrations e seed.
+
+
+Lembre-se: sempre ONDE ESTAMOS / O QUE ENTREGAREI / PRÓXIMO PASSO / CHECKPOINT, e use RECAPI-TULAÇÃO RÁPIDA + DÚVIDA se precisar.

@@ -1,0 +1,164 @@
+import { useEffect } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { useQuery } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
+import { isUnauthorizedError } from "@/lib/authUtils";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Shield, Globe, Network, Activity } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import type { DomainRule, IpWhitelist, Tenant } from "@shared/schema";
+
+export default function Home() {
+  const { toast } = useToast();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      toast({
+        title: "Unauthorized",
+        description: "You are logged out. Logging in again...",
+        variant: "destructive",
+      });
+      setTimeout(() => {
+        window.location.href = "/api/login";
+      }, 500);
+    }
+  }, [isAuthenticated, authLoading, toast]);
+
+  const { data: tenant, isLoading: tenantLoading } = useQuery<Tenant>({
+    queryKey: ["/api/tenant/me"],
+    enabled: isAuthenticated,
+  });
+
+  const { data: domains = [], isLoading: domainsLoading } = useQuery<DomainRule[]>({
+    queryKey: ["/api/domains"],
+    enabled: isAuthenticated,
+  });
+
+  const { data: whitelist = [], isLoading: whitelistLoading } = useQuery<IpWhitelist[]>({
+    queryKey: ["/api/whitelist"],
+    enabled: isAuthenticated,
+  });
+
+  if (authLoading || tenantLoading) {
+    return <HomeSkeleton />;
+  }
+
+  const activeDomains = domains.filter(d => d.status === "active").length;
+  const totalDomains = domains.length;
+  const whitelistCount = whitelist.length;
+
+  const stats = [
+    {
+      title: "Active Blocks",
+      value: activeDomains.toString(),
+      description: `${totalDomains} total domains`,
+      icon: Shield,
+      color: "text-primary",
+    },
+    {
+      title: "Blocked Domains",
+      value: totalDomains.toString(),
+      description: `${activeDomains} currently active`,
+      icon: Globe,
+      color: "text-destructive",
+    },
+    {
+      title: "Whitelisted IPs",
+      value: whitelistCount.toString(),
+      description: "Authorized access points",
+      icon: Network,
+      color: "text-blue-500",
+    },
+    {
+      title: "Status",
+      value: tenant?.isActive ? "Active" : "Inactive",
+      description: tenant?.subscriptionStatus || "unknown",
+      icon: Activity,
+      color: tenant?.isActive ? "text-green-500" : "text-muted-foreground",
+    },
+  ];
+
+  return (
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-3xl font-bold mb-2" data-testid="text-page-title">Dashboard</h1>
+        <p className="text-muted-foreground">
+          Welcome back! Here's an overview of your DNS protection.
+        </p>
+      </div>
+
+      {tenant && (
+        <Card>
+          <CardHeader>
+            <CardTitle data-testid="text-tenant-name">{tenant.name}</CardTitle>
+            <CardDescription>
+              Tenant ID: {tenant.slug} • Public IP: {tenant.publicIp || "Not configured"}
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {stats.map((stat, index) => {
+          const Icon = stat.icon;
+          return (
+            <Card key={index} className="hover-elevate">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  {stat.title}
+                </CardTitle>
+                <Icon className={`h-4 w-4 ${stat.color}`} />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold" data-testid={`stat-${stat.title.toLowerCase().replace(/\s+/g, '-')}`}>
+                  {stat.value}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {stat.description}
+                </p>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      {(!tenant?.publicIp) && (
+        <Card className="border-destructive/50 bg-destructive/5">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-destructive">
+              <Activity className="h-5 w-5" />
+              Configuration Required
+            </CardTitle>
+            <CardDescription>
+              Your public IP address is not configured. Contact support to complete your setup.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      )}
+    </div>
+  );
+}
+
+function HomeSkeleton() {
+  return (
+    <div className="space-y-8">
+      <div>
+        <Skeleton className="h-9 w-48 mb-2" />
+        <Skeleton className="h-5 w-96" />
+      </div>
+      <Skeleton className="h-24 w-full" />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[1, 2, 3, 4].map((i) => (
+          <Skeleton key={i} className="h-32" />
+        ))}
+      </div>
+    </div>
+  );
+}
