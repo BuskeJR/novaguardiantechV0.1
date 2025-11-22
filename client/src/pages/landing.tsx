@@ -13,7 +13,7 @@ export default function Landing() {
             <span className="text-xl font-bold" data-testid="text-brand-name">NovaGuardian</span>
           </div>
           <Button 
-            onClick={() => window.location.href = "/api/login"}
+            onClick={() => window.location.href = "/login"}
             data-testid="button-login"
           >
             Entrar
@@ -39,7 +39,7 @@ export default function Landing() {
             <Button 
               size="lg" 
               className="text-lg px-8 py-6"
-              onClick={() => window.location.href = "/api/login"}
+              onClick={() => window.location.href = "/login"}
               data-testid="button-get-started"
             >
               Começar Gratuitamente
@@ -178,7 +178,7 @@ export default function Landing() {
           <Button 
             size="lg" 
             className="text-lg px-8 py-6"
-            onClick={() => window.location.href = "/api/login"}
+            onClick={() => window.location.href = "/login"}
             data-testid="button-cta-start"
           >
             Começar Teste Grátis

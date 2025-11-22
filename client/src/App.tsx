@@ -10,6 +10,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { useAuth } from "@/hooks/useAuth";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
+import Login from "@/pages/login";
 import Home from "@/pages/home";
 import Domains from "@/pages/domains";
 import Whitelist from "@/pages/whitelist";
@@ -24,6 +25,7 @@ function Router() {
     return (
       <Switch>
         <Route path="/" component={Landing} />
+        <Route path="/login" component={Login} />
         <Route component={NotFound} />
       </Switch>
     );
