@@ -16,7 +16,7 @@ export default function Landing() {
             onClick={() => window.location.href = "/api/login"}
             data-testid="button-login"
           >
-            Sign In
+            Entrar
           </Button>
         </div>
       </header>
@@ -26,14 +26,14 @@ export default function Landing() {
         <div className="mx-auto max-w-4xl text-center">
           <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary mb-8">
             <Shield className="h-4 w-4" />
-            Enterprise DNS Security
+            Proteção Empresarial de DNS
           </div>
           <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight mb-6">
-            Protect Your Network with
-            <span className="text-primary"> DNS Blocking</span>
+            Proteja Sua Rede com
+            <span className="text-primary"> Bloqueio de DNS</span>
           </h1>
           <p className="text-xl text-muted-foreground leading-relaxed mb-10 max-w-2xl mx-auto">
-            Multi-tenant DNS filtering solution. Block malicious domains, ads, and unwanted content across your entire network with a single click.
+            Solução multi-tenant de filtragem DNS. Bloqueie domínios maliciosos, anúncios e conteúdo indesejado em toda sua rede com um único clique.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Button 
@@ -42,7 +42,7 @@ export default function Landing() {
               onClick={() => window.location.href = "/api/login"}
               data-testid="button-get-started"
             >
-              Get Started Free
+              Começar Gratuitamente
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
             <Button 
@@ -51,7 +51,7 @@ export default function Landing() {
               className="text-lg px-8 py-6"
               data-testid="button-learn-more"
             >
-              Learn More
+              Saiba Mais
             </Button>
           </div>
         </div>
@@ -61,9 +61,9 @@ export default function Landing() {
       <section className="container px-6 py-24 bg-muted/30">
         <div className="mx-auto max-w-6xl">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">How It Works</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Como Funciona</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Three simple steps to protect your entire network
+              Três passos simples para proteger sua rede inteira
             </p>
           </div>
           
@@ -71,20 +71,20 @@ export default function Landing() {
             {[
               {
                 step: "1",
-                title: "Create Account",
-                description: "Sign up and configure your tenant with your public IP address",
+                title: "Criar Conta",
+                description: "Cadastre-se e configure seu tenant com seu endereço IP público",
                 icon: Users,
               },
               {
                 step: "2",
-                title: "Add Domains",
-                description: "Add domains you want to block through our intuitive dashboard",
+                title: "Adicionar Domínios",
+                description: "Adicione domínios que deseja bloquear através do nosso painel intuitivo",
                 icon: Lock,
               },
               {
                 step: "3",
-                title: "Instant Protection",
-                description: "Domains are automatically blocked across your entire network",
+                title: "Proteção Instantânea",
+                description: "Domínios são bloqueados automaticamente em toda sua rede",
                 icon: Zap,
               },
             ].map((item) => (
@@ -111,42 +111,42 @@ export default function Landing() {
       <section className="container px-6 py-24">
         <div className="mx-auto max-w-6xl">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Powerful Features</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Recursos Poderosos</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Everything you need to manage DNS blocking at scale
+              Tudo que você precisa para gerenciar bloqueio de DNS em escala
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {[
               {
-                title: "Multi-Tenant Support",
-                description: "Isolated DNS configurations for each client with full data separation",
+                title: "Suporte Multi-Tenant",
+                description: "Configurações de DNS isoladas para cada cliente com separação total de dados",
                 icon: Users,
               },
               {
-                title: "Real-Time Blocking",
-                description: "Instant domain blocking across your entire network infrastructure",
+                title: "Bloqueio em Tempo Real",
+                description: "Bloqueio instantâneo de domínios em toda sua infraestrutura de rede",
                 icon: Zap,
               },
               {
-                title: "IP Whitelisting",
-                description: "Control which IP addresses can access your DNS protection",
+                title: "Lista Branca de IPs",
+                description: "Controle quais endereços IP podem acessar sua proteção de DNS",
                 icon: Network,
               },
               {
-                title: "Audit Logging",
-                description: "Complete audit trail of all configuration changes and actions",
+                title: "Registro de Auditoria",
+                description: "Trilha de auditoria completa de todas as alterações e ações de configuração",
                 icon: FileText,
               },
               {
-                title: "Advanced Security",
-                description: "Role-based access control with admin and user permissions",
+                title: "Segurança Avançada",
+                description: "Controle de acesso baseado em funções com permissões de admin e usuário",
                 icon: Lock,
               },
               {
-                title: "Dashboard Analytics",
-                description: "Real-time statistics and insights into blocked queries",
+                title: "Análises do Painel",
+                description: "Estatísticas em tempo real e insights sobre consultas bloqueadas",
                 icon: LayoutDashboard,
               },
             ].map((feature, index) => (
@@ -170,10 +170,10 @@ export default function Landing() {
       <section className="container px-6 py-24 bg-primary/5">
         <div className="mx-auto max-w-3xl text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-6">
-            Ready to Secure Your Network?
+            Pronto para Proteger Sua Rede?
           </h2>
           <p className="text-lg text-muted-foreground mb-10">
-            Join businesses protecting their networks with NovaGuardian DNS
+            Junte-se a empresas que protegem suas redes com NovaGuardian DNS
           </p>
           <Button 
             size="lg" 
@@ -181,7 +181,7 @@ export default function Landing() {
             onClick={() => window.location.href = "/api/login"}
             data-testid="button-cta-start"
           >
-            Start Free Trial
+            Começar Teste Grátis
             <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
         </div>
@@ -195,7 +195,7 @@ export default function Landing() {
             <span className="font-semibold">NovaGuardian</span>
           </div>
           <p className="text-sm text-muted-foreground">
-            © 2025 NovaGuardianTech. Enterprise DNS Protection.
+            © 2025 NovaGuardianTech. Proteção de DNS Empresarial.
           </p>
         </div>
       </footer>

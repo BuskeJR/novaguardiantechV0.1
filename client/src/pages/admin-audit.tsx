@@ -30,8 +30,8 @@ export default function AdminAudit() {
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       toast({
-        title: "Unauthorized",
-        description: "You are logged out. Logging in again...",
+        title: "Não Autorizado",
+        description: "Você foi desconectado. Entrando novamente...",
         variant: "destructive",
       });
       setTimeout(() => {
@@ -42,8 +42,8 @@ export default function AdminAudit() {
 
     if (!authLoading && !isAdmin) {
       toast({
-        title: "Access Denied",
-        description: "You don't have admin permissions",
+        title: "Acesso Negado",
+        description: "Você não tem permissões de administrador",
         variant: "destructive",
       });
       navigate("/");
@@ -62,40 +62,40 @@ export default function AdminAudit() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold" data-testid="text-page-title">Audit Logs</h1>
+        <h1 className="text-3xl font-bold" data-testid="text-page-title">Registros de Auditoria</h1>
         <p className="text-muted-foreground mt-1">
-          System-wide activity and configuration changes
+          Atividades do sistema e alterações de configuração
         </p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Recent Activity ({logs.length})</CardTitle>
+          <CardTitle>Atividade Recente ({logs.length})</CardTitle>
           <CardDescription>
-            Complete audit trail of all administrative actions
+            Trilha de auditoria completa de todas as ações administrativas
           </CardDescription>
         </CardHeader>
         <CardContent>
           {logs.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-muted-foreground">No audit logs yet</p>
+              <p className="text-muted-foreground">Nenhum registro de auditoria ainda</p>
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Timestamp</TableHead>
-                  <TableHead>Action</TableHead>
-                  <TableHead>Resource</TableHead>
-                  <TableHead>Actor</TableHead>
-                  <TableHead>Details</TableHead>
+                  <TableHead>Data/Hora</TableHead>
+                  <TableHead>Ação</TableHead>
+                  <TableHead>Recurso</TableHead>
+                  <TableHead>Ator</TableHead>
+                  <TableHead>Detalhes</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {logs.map((log) => (
                   <TableRow key={log.id} data-testid={`row-log-${log.id}`}>
                     <TableCell className="text-sm text-muted-foreground">
-                      {log.createdAt ? new Date(log.createdAt).toLocaleString() : "—"}
+                      {log.createdAt ? new Date(log.createdAt).toLocaleString('pt-BR') : "—"}
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline">{log.action}</Badge>
@@ -104,7 +104,7 @@ export default function AdminAudit() {
                       {log.resourceType || "—"}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {log.actorUserId || "System"}
+                      {log.actorUserId || "Sistema"}
                     </TableCell>
                     <TableCell className="max-w-xs truncate text-sm text-muted-foreground">
                       {log.payloadJson ? JSON.stringify(log.payloadJson).substring(0, 50) + "..." : "—"}

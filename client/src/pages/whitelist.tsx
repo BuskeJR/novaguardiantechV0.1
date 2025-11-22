@@ -46,8 +46,8 @@ export default function Whitelist() {
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       toast({
-        title: "Unauthorized",
-        description: "You are logged out. Logging in again...",
+        title: "Não Autorizado",
+        description: "Você foi desconectado. Entrando novamente...",
         variant: "destructive",
       });
       setTimeout(() => {
@@ -68,8 +68,8 @@ export default function Whitelist() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/whitelist"] });
       toast({
-        title: "Success",
-        description: "IP address whitelisted successfully",
+        title: "Sucesso",
+        description: "Endereço IP adicionado à lista branca com sucesso",
       });
       setIsAddDialogOpen(false);
       setNewIp({ ipAddress: "", label: "" });
@@ -77,8 +77,8 @@ export default function Whitelist() {
     onError: (error: Error) => {
       if (isUnauthorizedError(error)) {
         toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
+          title: "Não Autorizado",
+          description: "Você foi desconectado. Entrando novamente...",
           variant: "destructive",
         });
         setTimeout(() => {
@@ -87,8 +87,8 @@ export default function Whitelist() {
         return;
       }
       toast({
-        title: "Error",
-        description: error.message || "Failed to add IP",
+        title: "Erro",
+        description: error.message || "Falha ao adicionar IP",
         variant: "destructive",
       });
     },
@@ -101,15 +101,15 @@ export default function Whitelist() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/whitelist"] });
       toast({
-        title: "Success",
-        description: "IP removed from whitelist",
+        title: "Sucesso",
+        description: "IP removido da lista branca",
       });
     },
     onError: (error: Error) => {
       if (isUnauthorizedError(error)) {
         toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
+          title: "Não Autorizado",
+          description: "Você foi desconectado. Entrando novamente...",
           variant: "destructive",
         });
         setTimeout(() => {
@@ -118,8 +118,8 @@ export default function Whitelist() {
         return;
       }
       toast({
-        title: "Error",
-        description: error.message || "Failed to remove IP",
+        title: "Erro",
+        description: error.message || "Falha ao remover IP",
         variant: "destructive",
       });
     },
@@ -133,41 +133,41 @@ export default function Whitelist() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold" data-testid="text-page-title">IP Whitelist</h1>
+          <h1 className="text-3xl font-bold" data-testid="text-page-title">Lista Branca de IPs</h1>
           <p className="text-muted-foreground mt-1">
-            Manage authorized IP addresses for DNS access
+            Gerencie os endereços IP autorizados para acesso ao DNS
           </p>
         </div>
         <Button onClick={() => setIsAddDialogOpen(true)} data-testid="button-add-ip">
           <Plus className="h-4 w-4 mr-2" />
-          Add IP
+          Adicionar IP
         </Button>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Whitelisted IPs ({whitelist.length})</CardTitle>
+          <CardTitle>IPs na Lista Branca ({whitelist.length})</CardTitle>
           <CardDescription>
-            Only these IP addresses can access your DNS protection service
+            Apenas estes endereços IP podem acessar seu serviço de proteção de DNS
           </CardDescription>
         </CardHeader>
         <CardContent>
           {whitelist.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-muted-foreground mb-4">No IP addresses whitelisted yet</p>
+              <p className="text-muted-foreground mb-4">Nenhum endereço IP na lista branca ainda</p>
               <Button variant="outline" onClick={() => setIsAddDialogOpen(true)}>
                 <Plus className="h-4 w-4 mr-2" />
-                Add Your First IP
+                Adicionar Primeiro IP
               </Button>
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>IP Address</TableHead>
-                  <TableHead>Label</TableHead>
-                  <TableHead>Added</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>Endereço IP</TableHead>
+                  <TableHead>Rótulo</TableHead>
+                  <TableHead>Adicionado</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -180,7 +180,7 @@ export default function Whitelist() {
                       {ip.label || "—"}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {ip.createdAt ? new Date(ip.createdAt).toLocaleDateString() : "—"}
+                      {ip.createdAt ? new Date(ip.createdAt).toLocaleDateString('pt-BR') : "—"}
                     </TableCell>
                     <TableCell className="text-right">
                       <Button
@@ -189,7 +189,7 @@ export default function Whitelist() {
                         onClick={() => deleteMutation.mutate(ip.id)}
                         disabled={deleteMutation.isPending}
                         data-testid={`button-delete-${ip.id}`}
-                        title="Remove"
+                        title="Remover"
                       >
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
@@ -205,14 +205,14 @@ export default function Whitelist() {
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add IP to Whitelist</DialogTitle>
+            <DialogTitle>Adicionar IP à Lista Branca</DialogTitle>
             <DialogDescription>
-              Allow this IP address to access your DNS protection
+              Autorize este endereço IP a acessar sua proteção de DNS
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="ipAddress">IP Address *</Label>
+              <Label htmlFor="ipAddress">Endereço IP *</Label>
               <Input
                 id="ipAddress"
                 placeholder="192.168.1.1"
@@ -222,10 +222,10 @@ export default function Whitelist() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="label">Label (optional)</Label>
+              <Label htmlFor="label">Rótulo (opcional)</Label>
               <Input
                 id="label"
-                placeholder="Office Network"
+                placeholder="Rede do Escritório"
                 value={newIp.label}
                 onChange={(e) => setNewIp({ ...newIp, label: e.target.value })}
                 data-testid="input-label"
@@ -238,14 +238,14 @@ export default function Whitelist() {
               onClick={() => setIsAddDialogOpen(false)}
               data-testid="button-cancel"
             >
-              Cancel
+              Cancelar
             </Button>
             <Button
               onClick={() => addMutation.mutate(newIp)}
               disabled={!newIp.ipAddress || addMutation.isPending}
               data-testid="button-submit"
             >
-              {addMutation.isPending ? "Adding..." : "Add IP"}
+              {addMutation.isPending ? "Adicionando..." : "Adicionar IP"}
             </Button>
           </DialogFooter>
         </DialogContent>

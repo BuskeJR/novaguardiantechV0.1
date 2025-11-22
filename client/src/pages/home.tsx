@@ -21,8 +21,8 @@ export default function Home() {
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       toast({
-        title: "Unauthorized",
-        description: "You are logged out. Logging in again...",
+        title: "Não Autorizado",
+        description: "Você foi desconectado. Entrando novamente...",
         variant: "destructive",
       });
       setTimeout(() => {
@@ -56,30 +56,30 @@ export default function Home() {
 
   const stats = [
     {
-      title: "Active Blocks",
+      title: "Bloqueios Ativos",
       value: activeDomains.toString(),
-      description: `${totalDomains} total domains`,
+      description: `${totalDomains} domínios no total`,
       icon: Shield,
       color: "text-primary",
     },
     {
-      title: "Blocked Domains",
+      title: "Domínios Bloqueados",
       value: totalDomains.toString(),
-      description: `${activeDomains} currently active`,
+      description: `${activeDomains} ativo(s) atualmente`,
       icon: Globe,
       color: "text-destructive",
     },
     {
-      title: "Whitelisted IPs",
+      title: "IPs na Lista Branca",
       value: whitelistCount.toString(),
-      description: "Authorized access points",
+      description: "Pontos de acesso autorizados",
       icon: Network,
       color: "text-blue-500",
     },
     {
       title: "Status",
-      value: tenant?.isActive ? "Active" : "Inactive",
-      description: tenant?.subscriptionStatus || "unknown",
+      value: tenant?.isActive ? "Ativo" : "Inativo",
+      description: tenant?.subscriptionStatus || "desconhecido",
       icon: Activity,
       color: tenant?.isActive ? "text-green-500" : "text-muted-foreground",
     },
@@ -88,9 +88,9 @@ export default function Home() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold mb-2" data-testid="text-page-title">Dashboard</h1>
+        <h1 className="text-3xl font-bold mb-2" data-testid="text-page-title">Painel de Controle</h1>
         <p className="text-muted-foreground">
-          Welcome back! Here's an overview of your DNS protection.
+          Bem-vindo de volta! Aqui está uma visão geral da sua proteção de DNS.
         </p>
       </div>
 
@@ -99,7 +99,7 @@ export default function Home() {
           <CardHeader>
             <CardTitle data-testid="text-tenant-name">{tenant.name}</CardTitle>
             <CardDescription>
-              Tenant ID: {tenant.slug} • Public IP: {tenant.publicIp || "Not configured"}
+              ID do Tenant: {tenant.slug} • IP Público: {tenant.publicIp || "Não configurado"}
             </CardDescription>
           </CardHeader>
         </Card>
@@ -134,10 +134,10 @@ export default function Home() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-destructive">
               <Activity className="h-5 w-5" />
-              Configuration Required
+              Configuração Necessária
             </CardTitle>
             <CardDescription>
-              Your public IP address is not configured. Contact support to complete your setup.
+              Seu endereço IP público não está configurado. Entre em contato com o suporte para completar sua configuração.
             </CardDescription>
           </CardHeader>
         </Card>

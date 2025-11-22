@@ -52,8 +52,8 @@ export default function AdminClients() {
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       toast({
-        title: "Unauthorized",
-        description: "You are logged out. Logging in again...",
+        title: "Não Autorizado",
+        description: "Você foi desconectado. Entrando novamente...",
         variant: "destructive",
       });
       setTimeout(() => {
@@ -64,8 +64,8 @@ export default function AdminClients() {
 
     if (!authLoading && !isAdmin) {
       toast({
-        title: "Access Denied",
-        description: "You don't have admin permissions",
+        title: "Acesso Negado",
+        description: "Você não tem permissões de administrador",
         variant: "destructive",
       });
       navigate("/");
@@ -84,8 +84,8 @@ export default function AdminClients() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/tenants"] });
       toast({
-        title: "Success",
-        description: "Client added successfully",
+        title: "Sucesso",
+        description: "Cliente adicionado com sucesso",
       });
       setIsAddDialogOpen(false);
       setNewTenant({ name: "", slug: "", publicIp: "" });
@@ -93,8 +93,8 @@ export default function AdminClients() {
     onError: (error: Error) => {
       if (isUnauthorizedError(error)) {
         toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
+          title: "Não Autorizado",
+          description: "Você foi desconectado. Entrando novamente...",
           variant: "destructive",
         });
         setTimeout(() => {
@@ -103,8 +103,8 @@ export default function AdminClients() {
         return;
       }
       toast({
-        title: "Error",
-        description: error.message || "Failed to add client",
+        title: "Erro",
+        description: error.message || "Falha ao adicionar cliente",
         variant: "destructive",
       });
     },
@@ -117,8 +117,8 @@ export default function AdminClients() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/tenants"] });
       toast({
-        title: "Success",
-        description: "Client updated successfully",
+        title: "Sucesso",
+        description: "Cliente atualizado com sucesso",
       });
       setIsEditDialogOpen(false);
       setSelectedTenant(null);
@@ -126,8 +126,8 @@ export default function AdminClients() {
     onError: (error: Error) => {
       if (isUnauthorizedError(error)) {
         toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
+          title: "Não Autorizado",
+          description: "Você foi desconectado. Entrando novamente...",
           variant: "destructive",
         });
         setTimeout(() => {
@@ -136,8 +136,8 @@ export default function AdminClients() {
         return;
       }
       toast({
-        title: "Error",
-        description: error.message || "Failed to update client",
+        title: "Erro",
+        description: error.message || "Falha ao atualizar cliente",
         variant: "destructive",
       });
     },
@@ -151,43 +151,43 @@ export default function AdminClients() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold" data-testid="text-page-title">Manage Clients</h1>
+          <h1 className="text-3xl font-bold" data-testid="text-page-title">Gerenciar Clientes</h1>
           <p className="text-muted-foreground mt-1">
-            Configure client tenants and their DNS settings
+            Configure os tenants de clientes e suas configurações de DNS
           </p>
         </div>
         <Button onClick={() => setIsAddDialogOpen(true)} data-testid="button-add-client">
           <Plus className="h-4 w-4 mr-2" />
-          Add Client
+          Adicionar Cliente
         </Button>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Clients ({tenants.length})</CardTitle>
+          <CardTitle>Clientes ({tenants.length})</CardTitle>
           <CardDescription>
-            Multi-tenant DNS blocking clients
+            Clientes de bloqueio DNS multi-tenant
           </CardDescription>
         </CardHeader>
         <CardContent>
           {tenants.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-muted-foreground mb-4">No clients configured yet</p>
+              <p className="text-muted-foreground mb-4">Nenhum cliente configurado ainda</p>
               <Button variant="outline" onClick={() => setIsAddDialogOpen(true)}>
                 <Plus className="h-4 w-4 mr-2" />
-                Add First Client
+                Adicionar Primeiro Cliente
               </Button>
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
+                  <TableHead>Nome</TableHead>
                   <TableHead>Slug</TableHead>
-                  <TableHead>Public IP</TableHead>
+                  <TableHead>IP Público</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Subscription</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>Assinatura</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -200,18 +200,18 @@ export default function AdminClients() {
                       {tenant.slug}
                     </TableCell>
                     <TableCell className="font-mono text-sm">
-                      {tenant.publicIp || <span className="text-muted-foreground">Not set</span>}
+                      {tenant.publicIp || <span className="text-muted-foreground">Não configurado</span>}
                     </TableCell>
                     <TableCell>
                       {tenant.isActive ? (
                         <Badge variant="default" className="gap-1">
                           <CheckCircle className="h-3 w-3" />
-                          Active
+                          Ativo
                         </Badge>
                       ) : (
                         <Badge variant="secondary" className="gap-1">
                           <XCircle className="h-3 w-3" />
-                          Inactive
+                          Inativo
                         </Badge>
                       )}
                     </TableCell>
@@ -227,7 +227,7 @@ export default function AdminClients() {
                           setIsEditDialogOpen(true);
                         }}
                         data-testid={`button-edit-${tenant.id}`}
-                        title="Edit"
+                        title="Editar"
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
@@ -244,14 +244,14 @@ export default function AdminClients() {
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add New Client</DialogTitle>
+            <DialogTitle>Adicionar Novo Cliente</DialogTitle>
             <DialogDescription>
-              Create a new tenant with DNS blocking capabilities
+              Crie um novo tenant com capacidades de bloqueio de DNS
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Client Name *</Label>
+              <Label htmlFor="name">Nome do Cliente *</Label>
               <Input
                 id="name"
                 placeholder="Acme Corp"
@@ -270,11 +270,11 @@ export default function AdminClients() {
                 data-testid="input-slug"
               />
               <p className="text-xs text-muted-foreground">
-                Unique identifier (lowercase, hyphens only)
+                Identificador único (minúsculas, apenas hífens)
               </p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="publicIp">Public IP (optional)</Label>
+              <Label htmlFor="publicIp">IP Público (opcional)</Label>
               <Input
                 id="publicIp"
                 placeholder="203.0.113.10"
@@ -290,14 +290,14 @@ export default function AdminClients() {
               onClick={() => setIsAddDialogOpen(false)}
               data-testid="button-cancel"
             >
-              Cancel
+              Cancelar
             </Button>
             <Button
               onClick={() => addMutation.mutate(newTenant)}
               disabled={!newTenant.name || !newTenant.slug || addMutation.isPending}
               data-testid="button-submit"
             >
-              {addMutation.isPending ? "Adding..." : "Add Client"}
+              {addMutation.isPending ? "Adicionando..." : "Adicionar Cliente"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -308,14 +308,14 @@ export default function AdminClients() {
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Edit Client</DialogTitle>
+              <DialogTitle>Editar Cliente</DialogTitle>
               <DialogDescription>
-                Update client configuration and IP address
+                Atualize a configuração do cliente e o endereço IP
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="edit-publicIp">Public IP Address</Label>
+                <Label htmlFor="edit-publicIp">Endereço IP Público</Label>
                 <Input
                   id="edit-publicIp"
                   placeholder="203.0.113.10"
@@ -330,7 +330,7 @@ export default function AdminClients() {
                 onClick={() => setIsEditDialogOpen(false)}
                 data-testid="button-cancel-edit"
               >
-                Cancel
+                Cancelar
               </Button>
               <Button
                 onClick={() => {
@@ -343,7 +343,7 @@ export default function AdminClients() {
                 disabled={updateMutation.isPending}
                 data-testid="button-submit-edit"
               >
-                {updateMutation.isPending ? "Updating..." : "Update Client"}
+                {updateMutation.isPending ? "Atualizando..." : "Atualizar Cliente"}
               </Button>
             </DialogFooter>
           </DialogContent>

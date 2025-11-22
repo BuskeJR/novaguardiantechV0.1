@@ -26,17 +26,17 @@ import { useAuth } from "@/hooks/useAuth";
 
 const userMenuItems = [
   {
-    title: "Dashboard",
+    title: "Painel de Controle",
     url: "/",
     icon: LayoutDashboard,
   },
   {
-    title: "Blocked Domains",
+    title: "Domínios Bloqueados",
     url: "/domains",
     icon: Globe,
   },
   {
-    title: "IP Whitelist",
+    title: "Lista Branca de IPs",
     url: "/whitelist",
     icon: Network,
   },
@@ -44,12 +44,12 @@ const userMenuItems = [
 
 const adminMenuItems = [
   {
-    title: "Manage Clients",
+    title: "Gerenciar Clientes",
     url: "/admin/clients",
     icon: Users,
   },
   {
-    title: "Audit Logs",
+    title: "Registros de Auditoria",
     url: "/admin/audit",
     icon: FileText,
   },
@@ -73,13 +73,13 @@ export function AppSidebar() {
             <Shield className="h-8 w-8 text-primary" data-testid="logo-icon" />
             <div>
               <h1 className="text-lg font-bold" data-testid="text-brand-name">NovaGuardian</h1>
-              <p className="text-xs text-muted-foreground">DNS Protection</p>
+              <p className="text-xs text-muted-foreground">Proteção de DNS</p>
             </div>
           </div>
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+          <SidebarGroupLabel>Navegação</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (
@@ -100,7 +100,7 @@ export function AppSidebar() {
       <SidebarFooter>
         <div className="flex items-center gap-3 p-4 border-t">
           <Avatar className="h-9 w-9">
-            <AvatarImage src={user?.profileImageUrl || undefined} alt={user?.firstName || "User"} />
+            <AvatarImage src={user?.profileImageUrl || undefined} alt={user?.firstName || "Usuário"} />
             <AvatarFallback>{initials}</AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
@@ -116,7 +116,7 @@ export function AppSidebar() {
             size="icon"
             onClick={() => (window.location.href = "/api/logout")}
             data-testid="button-logout"
-            title="Logout"
+            title="Sair"
           >
             <LogOut className="h-4 w-4" />
           </Button>

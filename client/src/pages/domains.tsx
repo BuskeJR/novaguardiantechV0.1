@@ -57,8 +57,8 @@ export default function Domains() {
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       toast({
-        title: "Unauthorized",
-        description: "You are logged out. Logging in again...",
+        title: "Não Autorizado",
+        description: "Você foi desconectado. Entrando novamente...",
         variant: "destructive",
       });
       setTimeout(() => {
@@ -79,8 +79,8 @@ export default function Domains() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/domains"] });
       toast({
-        title: "Success",
-        description: "Domain added successfully",
+        title: "Sucesso",
+        description: "Domínio adicionado com sucesso",
       });
       setIsAddDialogOpen(false);
       setNewDomain({ domain: "", kind: "exact", status: "active", reason: "" });
@@ -88,8 +88,8 @@ export default function Domains() {
     onError: (error: Error) => {
       if (isUnauthorizedError(error)) {
         toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
+          title: "Não Autorizado",
+          description: "Você foi desconectado. Entrando novamente...",
           variant: "destructive",
         });
         setTimeout(() => {
@@ -98,8 +98,8 @@ export default function Domains() {
         return;
       }
       toast({
-        title: "Error",
-        description: error.message || "Failed to add domain",
+        title: "Erro",
+        description: error.message || "Falha ao adicionar domínio",
         variant: "destructive",
       });
     },
@@ -113,15 +113,15 @@ export default function Domains() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/domains"] });
       toast({
-        title: "Success",
-        description: "Domain status updated",
+        title: "Sucesso",
+        description: "Status do domínio atualizado",
       });
     },
     onError: (error: Error) => {
       if (isUnauthorizedError(error)) {
         toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
+          title: "Não Autorizado",
+          description: "Você foi desconectado. Entrando novamente...",
           variant: "destructive",
         });
         setTimeout(() => {
@@ -130,8 +130,8 @@ export default function Domains() {
         return;
       }
       toast({
-        title: "Error",
-        description: error.message || "Failed to update domain",
+        title: "Erro",
+        description: error.message || "Falha ao atualizar domínio",
         variant: "destructive",
       });
     },
@@ -144,15 +144,15 @@ export default function Domains() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/domains"] });
       toast({
-        title: "Success",
-        description: "Domain removed successfully",
+        title: "Sucesso",
+        description: "Domínio removido com sucesso",
       });
     },
     onError: (error: Error) => {
       if (isUnauthorizedError(error)) {
         toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
+          title: "Não Autorizado",
+          description: "Você foi desconectado. Entrando novamente...",
           variant: "destructive",
         });
         setTimeout(() => {
@@ -161,8 +161,8 @@ export default function Domains() {
         return;
       }
       toast({
-        title: "Error",
-        description: error.message || "Failed to remove domain",
+        title: "Erro",
+        description: error.message || "Falha ao remover domínio",
         variant: "destructive",
       });
     },
@@ -176,42 +176,42 @@ export default function Domains() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold" data-testid="text-page-title">Blocked Domains</h1>
+          <h1 className="text-3xl font-bold" data-testid="text-page-title">Domínios Bloqueados</h1>
           <p className="text-muted-foreground mt-1">
-            Manage domains blocked on your network
+            Gerencie os domínios bloqueados na sua rede
           </p>
         </div>
         <Button onClick={() => setIsAddDialogOpen(true)} data-testid="button-add-domain">
           <Plus className="h-4 w-4 mr-2" />
-          Add Domain
+          Adicionar Domínio
         </Button>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Domain Rules ({domains.length})</CardTitle>
+          <CardTitle>Regras de Domínio ({domains.length})</CardTitle>
           <CardDescription>
-            Exact matches and regex patterns for blocking unwanted content
+            Correspondências exatas e padrões regex para bloquear conteúdo indesejado
           </CardDescription>
         </CardHeader>
         <CardContent>
           {domains.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-muted-foreground mb-4">No domains blocked yet</p>
+              <p className="text-muted-foreground mb-4">Nenhum domínio bloqueado ainda</p>
               <Button variant="outline" onClick={() => setIsAddDialogOpen(true)}>
                 <Plus className="h-4 w-4 mr-2" />
-                Add Your First Domain
+                Adicionar Primeiro Domínio
               </Button>
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Domain</TableHead>
-                  <TableHead>Type</TableHead>
+                  <TableHead>Domínio</TableHead>
+                  <TableHead>Tipo</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Reason</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>Motivo</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -228,7 +228,7 @@ export default function Domains() {
                         variant={domain.status === "active" ? "default" : "secondary"}
                         data-testid={`badge-status-${domain.id}`}
                       >
-                        {domain.status}
+                        {domain.status === "active" ? "Ativo" : "Inativo"}
                       </Badge>
                     </TableCell>
                     <TableCell className="max-w-xs truncate text-sm text-muted-foreground">
@@ -244,7 +244,7 @@ export default function Domains() {
                           }
                           disabled={toggleMutation.isPending}
                           data-testid={`button-toggle-${domain.id}`}
-                          title={domain.status === "active" ? "Deactivate" : "Activate"}
+                          title={domain.status === "active" ? "Desativar" : "Ativar"}
                         >
                           {domain.status === "active" ? (
                             <PowerOff className="h-4 w-4" />
@@ -258,7 +258,7 @@ export default function Domains() {
                           onClick={() => deleteMutation.mutate(domain.id)}
                           disabled={deleteMutation.isPending}
                           data-testid={`button-delete-${domain.id}`}
-                          title="Delete"
+                          title="Remover"
                         >
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
@@ -275,14 +275,14 @@ export default function Domains() {
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add Blocked Domain</DialogTitle>
+            <DialogTitle>Adicionar Domínio Bloqueado</DialogTitle>
             <DialogDescription>
-              Add a domain to block across your network
+              Adicione um domínio para bloquear em toda sua rede
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="domain">Domain *</Label>
+              <Label htmlFor="domain">Domínio *</Label>
               <Input
                 id="domain"
                 placeholder="example.com"
@@ -292,7 +292,7 @@ export default function Domains() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="kind">Type</Label>
+              <Label htmlFor="kind">Tipo</Label>
               <Select
                 value={newDomain.kind}
                 onValueChange={(value) => setNewDomain({ ...newDomain, kind: value as "exact" | "regex" })}
@@ -301,16 +301,16 @@ export default function Domains() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="exact">Exact Match</SelectItem>
-                  <SelectItem value="regex">Regex Pattern</SelectItem>
+                  <SelectItem value="exact">Correspondência Exata</SelectItem>
+                  <SelectItem value="regex">Padrão Regex</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="reason">Reason (optional)</Label>
+              <Label htmlFor="reason">Motivo (opcional)</Label>
               <Textarea
                 id="reason"
-                placeholder="Why is this domain being blocked?"
+                placeholder="Por que este domínio está sendo bloqueado?"
                 value={newDomain.reason}
                 onChange={(e) => setNewDomain({ ...newDomain, reason: e.target.value })}
                 data-testid="input-reason"
@@ -323,14 +323,14 @@ export default function Domains() {
               onClick={() => setIsAddDialogOpen(false)}
               data-testid="button-cancel"
             >
-              Cancel
+              Cancelar
             </Button>
             <Button
               onClick={() => addMutation.mutate(newDomain)}
               disabled={!newDomain.domain || addMutation.isPending}
               data-testid="button-submit"
             >
-              {addMutation.isPending ? "Adding..." : "Add Domain"}
+              {addMutation.isPending ? "Adicionando..." : "Adicionar Domínio"}
             </Button>
           </DialogFooter>
         </DialogContent>
