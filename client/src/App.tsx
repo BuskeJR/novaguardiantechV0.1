@@ -11,6 +11,8 @@ import { useAuth } from "@/hooks/useAuth";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
 import Login from "@/pages/login";
+import Signup from "@/pages/signup";
+import Pricing from "@/pages/pricing";
 import Home from "@/pages/home";
 import Domains from "@/pages/domains";
 import Whitelist from "@/pages/whitelist";
@@ -26,6 +28,8 @@ function Router() {
       <Switch>
         <Route path="/" component={Landing} />
         <Route path="/login" component={Login} />
+        <Route path="/signup" component={Signup} />
+        <Route path="/pricing" component={Pricing} />
         <Route component={NotFound} />
       </Switch>
     );

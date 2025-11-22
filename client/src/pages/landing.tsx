@@ -12,12 +12,21 @@ export default function Landing() {
             <Shield className="h-7 w-7 text-primary" data-testid="logo-icon" />
             <span className="text-xl font-bold" data-testid="text-brand-name">NovaGuardian</span>
           </div>
-          <Button 
-            onClick={() => window.location.href = "/login"}
-            data-testid="button-login"
-          >
-            Entrar
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              onClick={() => window.location.href = "/login"}
+              variant="outline"
+              data-testid="button-login"
+            >
+              Entrar
+            </Button>
+            <Button 
+              onClick={() => window.location.href = "/signup"}
+              data-testid="button-signup-header"
+            >
+              Criar Conta
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -49,9 +58,10 @@ export default function Landing() {
               size="lg" 
               variant="outline" 
               className="text-lg px-8 py-6"
+              onClick={() => window.location.href = "/pricing"}
               data-testid="button-learn-more"
             >
-              Saiba Mais
+              Ver Planos
             </Button>
           </div>
         </div>
