@@ -36,17 +36,6 @@ export default function Home() {
     enabled: isAuthenticated,
   });
 
-  // Redireciona para preços se não tem plano pago
-  useEffect(() => {
-    if (tenant && isAuthenticated) {
-      const paidPlans = ["residencial", "plus", "pro"];
-      const hasPaidPlan = tenant.currentPlan && paidPlans.includes(tenant.currentPlan);
-      
-      if (!hasPaidPlan) {
-        window.location.href = "/pricing";
-      }
-    }
-  }, [tenant, isAuthenticated]);
 
   const { data: domains = [], isLoading: domainsLoading } = useQuery<DomainRule[]>({
     queryKey: ["/api/domains"],

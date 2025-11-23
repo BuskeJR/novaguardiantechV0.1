@@ -4,12 +4,9 @@ import { storage } from "./storage";
 import { z } from "zod";
 import { insertDomainRuleSchema, insertIpWhitelistSchema, insertTenantSchema } from "@shared/schema";
 import type { User } from "@shared/schema";
-import { stripe, PRICING_PLANS } from "./stripe-config";
-import { mercadopago, MERCADOPAGO_PRICING_PLANS } from "./mercadopago-config";
 import { hashPassword, comparePassword, getPasswordErrors } from "./auth-utils";
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
-import { Preference } from "mercadopago";
 
 // Middleware to require authentication
 function requireAuth(req: Request, res: Response, next: NextFunction) {
@@ -157,8 +154,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         slug: `${slug}-${newUser.id.substring(0, 8)}`,
         ownerId: newUser.id,
         isActive: true,
-        subscriptionStatus: "trial",
-        currentPlan: "free",
+        subscriptionStatus: "active",
       });
 
       // Log signup
@@ -226,8 +222,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           slug,
           ownerId: user.id,
           isActive: true,
-          subscriptionStatus: "trial",
-          currentPlan: "free",
+          subscriptionStatus: "active",
         });
 
         await createAuditLog(
@@ -269,7 +264,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...validated,
         tenantId: tenant.id,
         createdBy: user.id,
-      });
+      } as any);
 
       await createAuditLog(
         user.id,
@@ -369,7 +364,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...validated,
         tenantId: tenant.id,
         createdBy: user.id,
-      });
+      } as any);
 
       await createAuditLog(
         user.id,
@@ -423,33 +418,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/admin/tenants", requireAdmin, async (req: Request, res: Response) => {
     try {
       const tenants = await storage.getAllTenants();
-      
-      // Enrich tenants with owner information
-      const enrichedTenants = await Promise.all(
-        tenants.map(async (tenant) => {
-          try {
-            const [owner] = await db
-              .select()
-              .from(users)
-              .where(eq(users.id, tenant.ownerId))
-              .limit(1);
-            
-            return {
-              ...tenant,
-              owner: owner ? {
-                id: owner.id,
-                email: owner.email,
-                firstName: owner.firstName,
-                lastName: owner.lastName,
-              } : null,
-            };
-          } catch {
-            return { ...tenant, owner: null };
-          }
-        })
-      );
-      
-      res.json(enrichedTenants);
+      res.json(tenants);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -654,175 +623,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // ===== PRICING & CHECKOUT ROUTES =====
-
-  app.get("/api/pricing", async (req: Request, res: Response) => {
-    try {
-      res.json(PRICING_PLANS);
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  // Stripe checkout session
-  app.post("/api/checkout", requireAuth, async (req: Request, res: Response) => {
-    try {
-      if (!stripe) {
-        return res.status(400).json({ 
-          error: "Stripe não configurado. Usando modo desenvolvimento com versão gratuita." 
-        });
-      }
-
-      const user = req.user as User;
-      const tenant = await getUserTenant(user.id);
-      const { plan } = req.body;
-
-      if (!plan || !(plan in PRICING_PLANS)) {
-        return res.status(400).json({ error: "Plano inválido" });
-      }
-
-      const planData = PRICING_PLANS[plan as keyof typeof PRICING_PLANS];
-
-      if (plan === "free") {
-        // Free plan - just update subscription status
-        await storage.updateTenant(tenant.id, {
-          subscriptionStatus: "active",
-        });
-
-        return res.json({ success: true, planUpgraded: "free" });
-      }
-
-      // Get or create Stripe customer
-      let customerId = tenant.stripeCustomerId;
-      if (!customerId) {
-        const customer = await stripe.customers.create({
-          email: user.email,
-          metadata: { tenantId: tenant.id, userId: user.id },
-        });
-        customerId = customer.id;
-
-        await storage.updateTenant(tenant.id, {
-          stripeCustomerId: customerId,
-        });
-      }
-
-      // Create checkout session for paid plans
-      const session = await stripe.checkout.sessions.create({
-        customer: customerId,
-        payment_method_types: ["card"],
-        line_items: [
-          {
-            price: planData.stripePriceId,
-            quantity: 1,
-          },
-        ],
-        mode: "subscription",
-        success_url: `${process.env.BASE_URL || "http://localhost:5000"}/pricing?success=true&session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${process.env.BASE_URL || "http://localhost:5000"}/pricing?canceled=true`,
-        metadata: { tenantId: tenant.id, plan },
-      });
-
-      res.json({ sessionId: session.id, url: session.url });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  // MercadoPago checkout session
-  app.post("/api/checkout-mercadopago", requireAuth, async (req: Request, res: Response) => {
-    try {
-      if (!mercadopago) {
-        return res.status(400).json({ 
-          error: "MercadoPago não configurado. Configure MERCADOPAGO_ACCESS_TOKEN." 
-        });
-      }
-
-      const user = req.user as User;
-      const tenant = await getUserTenant(user.id);
-      const { plan } = req.body;
-
-      if (!plan || !(plan in MERCADOPAGO_PRICING_PLANS)) {
-        return res.status(400).json({ error: "Plano inválido" });
-      }
-
-      const planData = MERCADOPAGO_PRICING_PLANS[plan as keyof typeof MERCADOPAGO_PRICING_PLANS];
-
-      // Create MercadoPago preference
-      const preference = new Preference(mercadopago);
-      
-      const baseUrl = process.env.BASE_URL || "http://localhost:5000";
-      
-      const response = await preference.create({
-        body: {
-          items: [
-            {
-              title: planData.name,
-              quantity: 1,
-              unit_price: planData.price,
-              description: planData.description,
-            },
-          ],
-          payer: {
-            email: user.email,
-          },
-          back_urls: {
-            success: `${baseUrl}/pricing?success=true`,
-            failure: `${baseUrl}/pricing?canceled=true`,
-            pending: `${baseUrl}/pricing?pending=true`,
-          },
-          external_reference: `${tenant.id}|${plan}`,
-          metadata: {
-            tenantId: tenant.id,
-            plan,
-            userId: user.id,
-          },
-          statement_descriptor: "NovaGuardian DNS",
-          payment_methods: {
-            excluded_payment_types: [],
-            installments: 1,
-          },
-        },
-      });
-
-      // Update tenant with MercadoPago preference
-      await storage.updateTenant(tenant.id, {
-        mercadopagoCustomerId: response.id,
-        currentPlan: plan,
-      });
-
-      res.json({ 
-        success: true, 
-        url: response.init_point,
-        preferenceId: response.id 
-      });
-    } catch (error: any) {
-      console.error("MercadoPago checkout error:", error);
-      res.status(500).json({ error: error.message || "Erro ao criar preferência MercadoPago" });
-    }
-  });
-
-  // MercadoPago webhook
-  app.post("/api/webhook/mercadopago", async (req: Request, res: Response) => {
-    try {
-      const { type, data } = req.body;
-
-      if (type === "payment") {
-        const payment = new Preference(mercadopago);
-        
-        // Get payment details using data.id
-        console.log("MercadoPago webhook received:", type, data);
-
-        // For now, just acknowledge receipt
-        res.json({ received: true });
-      } else {
-        res.json({ received: true });
-      }
-    } catch (error: any) {
-      console.error("MercadoPago webhook error:", error);
-      res.status(500).json({ error: error.message });
-    }
-  });
-
   // ===== PASSWORD RESET ROUTES =====
 
   app.post("/api/auth/request-reset", async (req: Request, res: Response) => {
@@ -982,86 +782,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(updated);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  // ===== STRIPE WEBHOOK =====
-
-  // Stripe webhook
-  app.post("/api/webhook/stripe", async (req: Request, res: Response) => {
-    try {
-      if (!stripe) {
-        return res.status(400).json({ error: "Stripe not configured" });
-      }
-
-      const sig = req.headers["stripe-signature"] as string;
-      const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-
-      if (!webhookSecret) {
-        console.warn("STRIPE_WEBHOOK_SECRET not configured");
-        return res.status(400).json({ error: "Webhook not configured" });
-      }
-
-      let event;
-      try {
-        event = stripe.webhooks.constructEvent(
-          req.body as any,
-          sig,
-          webhookSecret
-        );
-      } catch (err: any) {
-        console.error("Webhook signature verification failed:", err.message);
-        return res.status(400).json({ error: "Invalid signature" });
-      }
-
-      // Handle subscription events
-      if (event.type === "checkout.session.completed") {
-        const session = event.data.object as any;
-        const { tenantId } = session.metadata;
-
-        if (tenantId) {
-          await storage.updateTenant(tenantId, {
-            subscriptionStatus: "active",
-          });
-
-          await createAuditLog(
-            null,
-            tenantId,
-            "subscription_upgraded",
-            "subscription",
-            tenantId,
-            { plan: session.metadata.plan }
-          );
-        }
-      }
-
-      if (event.type === "customer.subscription.deleted") {
-        const subscription = event.data.object as any;
-        const customerId = subscription.customer;
-
-        // Find tenant by customer ID and cancel subscription
-        const tenants = await storage.getAllTenants();
-        const tenant = tenants.find(t => t.stripeCustomerId === customerId);
-
-        if (tenant) {
-          await storage.updateTenant(tenant.id, {
-            subscriptionStatus: "canceled",
-          });
-
-          await createAuditLog(
-            null,
-            tenant.id,
-            "subscription_canceled",
-            "subscription",
-            tenant.id
-          );
-        }
-      }
-
-      res.json({ received: true });
-    } catch (error: any) {
-      console.error("Webhook error:", error);
       res.status(500).json({ error: error.message });
     }
   });

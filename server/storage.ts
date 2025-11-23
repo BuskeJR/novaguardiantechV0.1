@@ -145,7 +145,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createDomainRule(insertRule: InsertDomainRule): Promise<DomainRule> {
-    const [rule] = await db.insert(domainRules).values(insertRule).returning();
+    const [rule] = await db.insert(domainRules).values(insertRule as any).returning();
     return rule;
   }
 
@@ -181,7 +181,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createIpWhitelist(insertIp: InsertIpWhitelist): Promise<IpWhitelist> {
-    const [ip] = await db.insert(ipWhitelist).values(insertIp).returning();
+    const [ip] = await db.insert(ipWhitelist).values(insertIp as any).returning();
     return ip;
   }
 

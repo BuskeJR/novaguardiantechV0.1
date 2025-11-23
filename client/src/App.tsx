@@ -13,7 +13,6 @@ import Landing from "@/pages/landing";
 import Login from "@/pages/login";
 import Signup from "@/pages/signup";
 import ForgotPassword from "@/pages/forgot-password";
-import Pricing from "@/pages/pricing";
 import Home from "@/pages/home";
 import Domains from "@/pages/domains";
 import Whitelist from "@/pages/whitelist";
@@ -32,7 +31,6 @@ function Router() {
         <Route path="/login" component={Login} />
         <Route path="/signup" component={Signup} />
         <Route path="/forgot-password" component={ForgotPassword} />
-        <Route path="/pricing" component={Pricing} />
         <Route component={NotFound} />
       </Switch>
     );
@@ -52,7 +50,6 @@ function Router() {
           <main className="flex-1 overflow-y-auto p-6 md:p-8">
             <Switch>
               <Route path="/" component={Home} />
-              <Route path="/pricing" component={Pricing} />
               <Route path="/domains" component={Domains} />
               <Route path="/whitelist" component={Whitelist} />
               <Route path="/admin/clients" component={AdminClients} />
