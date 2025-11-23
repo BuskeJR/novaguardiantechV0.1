@@ -52,6 +52,7 @@ function Router() {
           <main className="flex-1 overflow-y-auto p-6 md:p-8">
             <Switch>
               <Route path="/" component={Home} />
+              <Route path="/pricing" component={Pricing} />
               <Route path="/domains" component={Domains} />
               <Route path="/whitelist" component={Whitelist} />
               <Route path="/admin/clients" component={AdminClients} />
