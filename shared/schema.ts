@@ -108,6 +108,8 @@ export const insertDomainRuleSchema = createInsertSchema(domainRules).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+  tenantId: true,
+  createdBy: true,
 });
 
 export const updateDomainRuleSchema = insertDomainRuleSchema.partial();
@@ -140,6 +142,8 @@ export const ipWhitelistRelations = relations(ipWhitelist, ({ one }) => ({
 export const insertIpWhitelistSchema = createInsertSchema(ipWhitelist).omit({
   id: true,
   createdAt: true,
+  tenantId: true,
+  createdBy: true,
 });
 
 export type InsertIpWhitelist = z.infer<typeof insertIpWhitelistSchema>;
