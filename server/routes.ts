@@ -87,6 +87,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             return done(null, false, { message: "Email ou senha inválidos" });
           }
 
+          // Validate user is active
+          if (user.isActive === false) {
+            return done(null, false, { message: "Usuário desativado. Contate o administrador" });
+          }
+
           const isValid = await comparePassword(password, user.passwordHash);
           if (!isValid) {
             return done(null, false, { message: "Email ou senha inválidos" });
