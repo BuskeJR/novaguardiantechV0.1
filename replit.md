@@ -24,7 +24,8 @@
 
 **Infrastructure:**
 - PostgreSQL (Neon serverless)
-- DNS blocking system (simulated for Replit)
+- UDP DNS Server (dns2 library)
+- Port 53 for DNS queries (production-ready)
 
 ### System Flow
 
@@ -137,11 +138,20 @@ Based on `design_guidelines.md`:
    - Professional HTML email templates
    - Currently using: scnovatec@gmail.com (can upgrade to custom domain)
 
+9. **DNS Blocking System (NEW!) 🎯**
+   - UDP DNS server on port 53 (production-ready)
+   - Real-time domain blocking (responds with 127.0.0.1)
+   - In-memory cache with 5-minute refresh from database
+   - Automatic wildcard subdomain blocking
+   - Supports active/inactive domain toggle
+   - Fallback to public DNS (8.8.8.8) for non-blocked domains
+   - Complete setup guide in web interface
+
 ### Pending Implementation
 
-- **Cloudflare DNS integration** (Next phase)
+- **Cloudflare DNS integration** (Optional - for zone management)
 - **MercadoPago payment integration** (Final phase - PIX + Cartão)
-- **Real-time statistics**
+- **Real-time statistics dashboard**
 - **Domain-based email authentication** (when user has custom domain)
 
 ## 📁 Project Structure
@@ -167,6 +177,7 @@ Based on `design_guidelines.md`:
 │   │   │   ├── home.tsx           # User dashboard
 │   │   │   ├── domains.tsx        # Domain management
 │   │   │   ├── whitelist.tsx      # IP whitelist
+│   │   │   ├── dns-setup.tsx      # DNS configuration guide
 │   │   │   ├── admin-clients.tsx  # Admin: manage clients
 │   │   │   ├── admin-audit.tsx    # Admin: audit logs
 │   │   │   └── not-found.tsx      # 404 page
@@ -181,9 +192,11 @@ Based on `design_guidelines.md`:
 │   ├── index-prod.ts        # Production server
 │   ├── routes.ts            # API route definitions
 │   ├── storage.ts           # Data access layer
+│   ├── dns.ts               # UDP DNS server implementation
 │   ├── email.ts             # SendGrid email integration
 │   ├── auth-utils.ts        # Password hashing & validation
-│   └── replitAuth.ts        # Replit Auth setup (pending)
+│   ├── cloudflare.ts        # Cloudflare API integration
+│   └── replitAuth.ts        # Replit Auth setup
 │
 ├── shared/                   # Shared types and schemas
 │   └── schema.ts            # Drizzle ORM models + Zod schemas
@@ -218,7 +231,7 @@ All React components and pages built with:
 - Database migrations with Drizzle ORM
 - Password reset via email flow
 
-### Phase 2: Backend & Email ✅ PARTIALLY COMPLETE
+### Phase 2: Backend, Email & DNS ✅ COMPLETE
 
 Completed:
 - ✅ User authentication (signup/login with password)
@@ -228,17 +241,16 @@ Completed:
 - ✅ Database foreign key constraints (SET NULL for soft deletions)
 - ✅ Audit logging system
 - ✅ All REST API endpoints
+- ✅ **UDP DNS server on port 53** - Production-ready DNS blocking
+- ✅ **DNS Setup guide page** - Complete configuration instructions
+- ✅ **Real-time domain blocking** - 127.0.0.1 responses
 
-Still needed:
-- Cloudflare DNS configuration sync
-- MercadoPago payment integration (PIX + Cartão)
-- Real-time DNS statistics
+### Phase 3: Payment & Advanced Features (NEXT)
 
-### Phase 3: Payment & DNS (NEXT)
-
-- **Cloudflare Integration** - Block/whitelist domains via Cloudflare API
-- **MercadoPago** - Subscription payment processing
-- **Email Domain Upgrade** - Change from scnovatec@gmail.com to custom domain when available
+- **MercadoPago** - Subscription payment processing (PIX + Cartão)
+- **Cloudflare Integration** (Optional) - For zone management
+- **Email Domain Upgrade** - Change from scnovatec@gmail.com to custom domain
+- **Real-time statistics dashboard**
 - End-to-end testing
 - Production deployment documentation
 
@@ -324,13 +336,42 @@ NODE_ENV=development
 - Requires SendGrid domain verification (add DKIM/SPF records)
 - No code changes needed - just update environment variable
 
+## 🌐 DNS System Architecture
+
+The DNS blocking system runs in parallel with Express API on port 53:
+
+```
+Client Network ──┐
+                 │ (port 53)
+                 └→ UDP DNS Server
+                    ├─ Query: tiktok.com?
+                    ├─ Check: Is blocked? YES
+                    └─ Response: 127.0.0.1 (blocked)
+                    
+                 Query: google.com?
+                 Check: Is blocked? NO
+                 └─ Fallback: Forward to 8.8.8.8
+```
+
+**Key Features:**
+- Uses `dns2` library for UDP socket handling
+- In-memory cache of blocked domains (refreshed every 5 minutes)
+- Reads from `domain_rules` table via storage interface
+- Supports exact match and wildcard blocking
+- Graceful fallback for non-blocked domains
+- Automatic port 53 binding (requires sudo/admin on production)
+
 ---
 
-**Last Updated:** 2025-11-23
-**Status:** Phase 1 Complete (Frontend) | Phase 2 Mostly Complete (Backend + Email) | Phase 3 Next (Cloudflare + MercadoPago)
+**Last Updated:** 2025-11-23 22:47
+**Status:** Phase 1 Complete ✅ | Phase 2 Complete ✅ | Phase 3 Next (MercadoPago Payment)
 
 **Latest Changes:**
-- ✅ SendGrid email integration implemented (2025-11-23)
+- ✅ DNS server implemented with UDP port 53 (2025-11-23)
+- ✅ Real-time domain blocking working (127.0.0.1 responses)
+- ✅ DNS setup guide page added to interface
+- ✅ In-memory cache with database sync every 5 minutes
+- ✅ Sidebar navigation updated with DNS setup link
+- ✅ SendGrid email integration implemented
 - ✅ Password reset email flow working end-to-end
 - ✅ Foreign key constraints fixed (no CASCADE issues)
-- ✅ User deletion with proper cleanup (audit logs/domains set to NULL)
