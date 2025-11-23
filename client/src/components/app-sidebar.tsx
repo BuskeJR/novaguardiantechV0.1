@@ -5,7 +5,7 @@ import {
   Network,
   Users,
   FileText,
-  Settings,
+  Cloud,
   LogOut,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
@@ -39,6 +39,11 @@ const userMenuItems = [
     title: "Lista Branca de IPs",
     url: "/whitelist",
     icon: Network,
+  },
+  {
+    title: "Configurar Cloudflare",
+    url: "/cloudflare-setup",
+    icon: Cloud,
   },
 ];
 
