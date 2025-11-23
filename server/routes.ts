@@ -7,6 +7,7 @@ import type { User } from "@shared/schema";
 import { stripe, PRICING_PLANS } from "./stripe-config";
 import { hashPassword, comparePassword, getPasswordErrors } from "./auth-utils";
 import passport from "passport";
+import { Strategy as LocalStrategy } from "passport-local";
 
 // Middleware to require authentication
 function requireAuth(req: Request, res: Response, next: NextFunction) {
@@ -72,6 +73,33 @@ const loginSchema = z.object({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // ===== PASSPORT LOCAL STRATEGY =====
+  passport.use(
+    new LocalStrategy(
+      {
+        usernameField: "email",
+        passwordField: "password",
+      },
+      async (email: string, password: string, done) => {
+        try {
+          const user = await storage.getUserByEmail(email);
+          if (!user || !user.passwordHash) {
+            return done(null, false, { message: "Email ou senha inválidos" });
+          }
+
+          const isValid = await comparePassword(password, user.passwordHash);
+          if (!isValid) {
+            return done(null, false, { message: "Email ou senha inválidos" });
+          }
+
+          return done(null, user);
+        } catch (err) {
+          return done(err);
+        }
+      }
+    )
+  );
+
   // ===== AUTH ROUTES =====
   
   app.get("/api/auth/user", requireAuth, async (req: Request, res: Response) => {
@@ -150,46 +178,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Email/Password login endpoint
-  app.post("/api/auth/login-password", async (req: Request, res: Response) => {
-    try {
-      const validated = loginSchema.parse(req.body);
-
-      const user = await storage.getUserByEmail(validated.email);
-      if (!user || !user.passwordHash) {
-        return res.status(401).json({ 
-          error: "Email ou senha inválidos" 
-        });
+  app.post("/api/auth/login-password", (req: Request, res: Response, next: NextFunction) => {
+    passport.authenticate("local", (err: any, user: User | false, info: any) => {
+      if (err) {
+        return res.status(500).json({ error: err.message });
       }
 
-      const isValid = await comparePassword(validated.password, user.passwordHash);
-      if (!isValid) {
-        return res.status(401).json({ 
-          error: "Email ou senha inválidos" 
-        });
+      if (!user) {
+        return res.status(401).json({ error: info?.message || "Email ou senha inválidos" });
       }
 
-      // Set session
-      (req.session as any).userId = user.id;
-      await new Promise((resolve, reject) => {
-        req.session?.save((err: any) => {
-          if (err) reject(err);
-          else resolve(null);
+      req.login(user, (loginErr) => {
+        if (loginErr) {
+          return res.status(500).json({ error: "Erro ao criar sessão" });
+        }
+
+        res.json({
+          userId: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
         });
       });
-
-      res.json({
-        userId: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-      });
-    } catch (error: any) {
-      if (error instanceof z.ZodError) {
-        res.status(400).json({ error: "Validação falhou", details: error.errors });
-      } else {
-        res.status(500).json({ error: error.message });
-      }
-    }
+    })(req, res, next);
   });
 
   // ===== TENANT ROUTES (USER) =====
