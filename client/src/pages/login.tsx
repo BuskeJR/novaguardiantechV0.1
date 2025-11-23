@@ -7,14 +7,13 @@ import { useToast } from "@/hooks/use-toast";
 
 export default function Login() {
   const { toast } = useToast();
-  const [selectedUser, setSelectedUser] = useState<string>("");
-  const [customUserId, setCustomUserId] = useState<string>("");
+  const [userId, setUserId] = useState<string>("");
 
-  const handleLogin = (userId: string) => {
-    if (!userId) {
+  const handleLogin = () => {
+    if (!userId.trim()) {
       toast({
         title: "Erro",
-        description: "Selecione um usuário ou insira um ID de usuário",
+        description: "Insira seu ID de usuário",
         variant: "destructive",
       });
       return;
@@ -37,34 +36,31 @@ export default function Login() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Demo Users Section */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-semibold">Usuários de Teste</h3>
-            <div className="grid grid-cols-2 gap-2">
-              <Button
-                variant={selectedUser === "demo-user" ? "default" : "outline"}
-                onClick={() => setSelectedUser("demo-user")}
-                data-testid="button-demo-user"
-              >
-                Demo Admin
-              </Button>
-              <Button
-                variant={selectedUser === "teste1" ? "default" : "outline"}
-                onClick={() => setSelectedUser("teste1")}
-                data-testid="button-teste1-user"
-              >
-                Teste1 (User)
-              </Button>
+          {/* Login Form */}
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-semibold">ID do Usuário</label>
+              <Input
+                placeholder="Insira seu ID de usuário"
+                value={userId}
+                onChange={(e) => setUserId(e.target.value)}
+                data-testid="input-user-id"
+                onKeyPress={(e) => {
+                  if (e.key === "Enter") {
+                    handleLogin();
+                  }
+                }}
+                autoFocus
+              />
             </div>
-            {selectedUser && (
-              <Button
-                className="w-full"
-                onClick={() => handleLogin(selectedUser)}
-                data-testid="button-login-selected"
-              >
-                Entrar como {selectedUser}
-              </Button>
-            )}
+
+            <Button
+              className="w-full"
+              onClick={handleLogin}
+              data-testid="button-login"
+            >
+              Entrar
+            </Button>
           </div>
 
           {/* Divider */}
@@ -74,45 +70,20 @@ export default function Login() {
             </div>
             <div className="relative flex justify-center text-xs uppercase">
               <span className="bg-card px-2 text-muted-foreground">
-                ou
+                novo cliente
               </span>
             </div>
           </div>
 
-          {/* Custom User Section */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-semibold">Usuário Personalizado</h3>
-            <Input
-              placeholder="ID do usuário"
-              value={customUserId}
-              onChange={(e) => setCustomUserId(e.target.value)}
-              data-testid="input-custom-user"
-              onKeyPress={(e) => {
-                if (e.key === "Enter" && customUserId) {
-                  handleLogin(customUserId);
-                }
-              }}
-            />
-            <Button
-              className="w-full"
-              variant="secondary"
-              onClick={() => handleLogin(customUserId)}
-              disabled={!customUserId}
-              data-testid="button-login-custom"
-            >
-              Entrar com ID Personalizado
-            </Button>
-          </div>
-
-          {/* Info Section */}
-          <div className="bg-muted/50 rounded-lg p-3 space-y-2 text-xs">
-            <p className="font-semibold">Informações de Teste:</p>
-            <ul className="space-y-1 text-muted-foreground">
-              <li>• <strong>demo-user:</strong> Acesso Admin</li>
-              <li>• <strong>teste1:</strong> Acesso Usuário</li>
-              <li>• Crie qualquer ID customizado</li>
-            </ul>
-          </div>
+          {/* Signup Link */}
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={() => window.location.href = "/signup"}
+            data-testid="button-create-account"
+          >
+            Criar Conta Gratuita
+          </Button>
         </CardContent>
       </Card>
     </div>
