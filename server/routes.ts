@@ -846,6 +846,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const tenant = await getUserTenant(user.id);
       const { zoneId } = req.body;
 
+      // Only owner or admin can configure Cloudflare
+      if (user.id !== tenant.ownerId && user.role !== "admin") {
+        return res.status(403).json({ error: "Apenas o proprietário do tenant ou administrador pode configurar Cloudflare" });
+      }
+
       if (!zoneId) {
         return res.status(400).json({ error: "Zone ID obrigatório" });
       }
