@@ -414,7 +414,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/admin/tenants", requireAdmin, async (req: Request, res: Response) => {
     try {
       const tenants = await storage.getAllTenants();
-      res.json(tenants);
+      
+      // Enrich tenants with owner information
+      const enrichedTenants = await Promise.all(
+        tenants.map(async (tenant) => {
+          try {
+            const [owner] = await db
+              .select()
+              .from(users)
+              .where(eq(users.id, tenant.ownerId))
+              .limit(1);
+            
+            return {
+              ...tenant,
+              owner: owner ? {
+                id: owner.id,
+                email: owner.email,
+                firstName: owner.firstName,
+                lastName: owner.lastName,
+              } : null,
+            };
+          } catch {
+            return { ...tenant, owner: null };
+          }
+        })
+      );
+      
+      res.json(enrichedTenants);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
