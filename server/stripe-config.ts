@@ -18,7 +18,7 @@ export const PRICING_PLANS = {
     price: 0,
     maxDomains: 100,
     maxIps: 5,
-    trialDays: 14,
+    trialDays: 3,
   },
   pro: {
     name: "Profissional",

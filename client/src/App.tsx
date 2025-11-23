@@ -17,6 +17,7 @@ import Home from "@/pages/home";
 import Domains from "@/pages/domains";
 import Whitelist from "@/pages/whitelist";
 import AdminClients from "@/pages/admin-clients";
+import AdminUsers from "@/pages/admin-users";
 import AdminAudit from "@/pages/admin-audit";
 
 function Router() {
@@ -52,6 +53,7 @@ function Router() {
               <Route path="/domains" component={Domains} />
               <Route path="/whitelist" component={Whitelist} />
               <Route path="/admin/clients" component={AdminClients} />
+              <Route path="/admin/users" component={AdminUsers} />
               <Route path="/admin/audit" component={AdminAudit} />
               <Route component={NotFound} />
             </Switch>

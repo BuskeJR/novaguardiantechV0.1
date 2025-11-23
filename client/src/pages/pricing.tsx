@@ -221,15 +221,6 @@ export default function Pricing() {
                 Não! O plano gratuito é totalmente sem cartão de crédito.
               </CardContent>
             </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Qual é a política de reembolso?</CardTitle>
-              </CardHeader>
-              <CardContent className="text-sm text-muted-foreground">
-                Oferecemos reembolso de 30 dias se não estiver satisfeito. Entre em contato com nosso suporte.
-              </CardContent>
-            </Card>
           </div>
         </div>
       </div>

@@ -34,6 +34,7 @@ export const users = pgTable("users", {
   profileImageUrl: varchar("profile_image_url"),
   googleId: varchar("google_id").unique(), // For Google OAuth
   role: varchar("role", { length: 20 }).notNull().default("user"), // 'admin' or 'user'
+  isActive: boolean("is_active").notNull().default(true), // For admin to deactivate users
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

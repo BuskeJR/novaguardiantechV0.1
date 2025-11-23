@@ -506,6 +506,145 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== USER MANAGEMENT ROUTES (ADMIN) =====
+
+  app.get("/api/admin/users", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const users = await storage.getAllUsers();
+      res.json(users);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/admin/users", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const user = req.user as User;
+      const { email, firstName, lastName, password, role } = req.body;
+
+      // Validate input
+      if (!email || !firstName || !lastName || !password || !role) {
+        return res.status(400).json({ error: "Campos obrigatórios: email, firstName, lastName, password, role" });
+      }
+
+      if (!["admin", "user"].includes(role)) {
+        return res.status(400).json({ error: "Role deve ser 'admin' ou 'user'" });
+      }
+
+      // Check if user already exists
+      const existing = await storage.getUserByEmail(email);
+      if (existing) {
+        return res.status(400).json({ error: "Email já cadastrado" });
+      }
+
+      // Validate and hash password
+      const passwordErrors = getPasswordErrors(password);
+      if (passwordErrors.length > 0) {
+        return res.status(400).json({ error: "Senha fraca", details: passwordErrors });
+      }
+
+      const passwordHash = await hashPassword(password);
+
+      // Create user
+      const newUser = await storage.createUser({
+        email,
+        firstName,
+        lastName,
+        passwordHash,
+        role,
+        profileImageUrl: null,
+        googleId: null,
+      });
+
+      // Create tenant if role is user
+      if (role === "user") {
+        await storage.createTenant({
+          name: `${firstName} ${lastName}`,
+          slug: email.split("@")[0],
+          ownerId: newUser.id,
+          isActive: true,
+          publicIp: null,
+          dnsConfigPath: null,
+          stripeCustomerId: null,
+          subscriptionStatus: "trial",
+        });
+      }
+
+      await createAuditLog(
+        user.id,
+        null,
+        "user_created",
+        "user",
+        newUser.id,
+        { email, role }
+      );
+
+      res.status(201).json(newUser);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.patch("/api/admin/users/:id", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const user = req.user as User;
+      const { id } = req.params;
+      const { isActive } = req.body;
+
+      if (isActive === undefined) {
+        return res.status(400).json({ error: "Campo 'isActive' obrigatório" });
+      }
+
+      const updated = await storage.updateUser(id, { isActive });
+      if (!updated) {
+        return res.status(404).json({ error: "Usuário não encontrado" });
+      }
+
+      await createAuditLog(
+        user.id,
+        null,
+        "user_updated",
+        "user",
+        id,
+        { isActive }
+      );
+
+      res.json(updated);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.delete("/api/admin/users/:id", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const user = req.user as User;
+      const { id } = req.params;
+
+      // Prevent admin from deleting themselves
+      if (id === user.id) {
+        return res.status(400).json({ error: "Você não pode deletar sua própria conta" });
+      }
+
+      const success = await storage.deleteUser(id);
+      if (!success) {
+        return res.status(404).json({ error: "Usuário não encontrado" });
+      }
+
+      await createAuditLog(
+        user.id,
+        null,
+        "user_deleted",
+        "user",
+        id,
+        {}
+      );
+
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // ===== PRICING & CHECKOUT ROUTES =====
 
   app.get("/api/pricing", async (req: Request, res: Response) => {

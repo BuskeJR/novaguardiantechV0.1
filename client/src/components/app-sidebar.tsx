@@ -49,6 +49,11 @@ const adminMenuItems = [
     icon: Users,
   },
   {
+    title: "Gerenciar Usuários",
+    url: "/admin/users",
+    icon: Users,
+  },
+  {
     title: "Registros de Auditoria",
     url: "/admin/audit",
     icon: FileText,
