@@ -12,6 +12,8 @@ import { Pool } from "pg";
 
 import { registerRoutes } from "./routes";
 import setupReplit from "./replitAuth";
+import passport from "passport";
+import { setupGoogleOAuth } from "./google-oauth";
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
@@ -63,6 +65,13 @@ app.use(express.json({
   }
 }));
 app.use(express.urlencoded({ extended: false }));
+
+// Initialize Passport
+app.use(passport.initialize());
+app.use(passport.session());
+
+// Setup Google OAuth
+setupGoogleOAuth();
 
 app.use((req, res, next) => {
   const start = Date.now();

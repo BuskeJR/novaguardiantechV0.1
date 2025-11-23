@@ -2,25 +2,52 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Shield } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Shield, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Login() {
   const { toast } = useToast();
-  const [userId, setUserId] = useState<string>("");
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [credentials, setCredentials] = useState({
+    email: "",
+    password: "",
+  });
 
-  const handleLogin = () => {
-    if (!userId.trim()) {
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const response = await fetch("/api/auth/login-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(credentials),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Erro ao fazer login");
+      }
+
+      toast({
+        title: "Bem-vindo!",
+        description: "Entrando na sua conta...",
+      });
+
+      // Redirect to dashboard
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 1000);
+    } catch (error: any) {
       toast({
         title: "Erro",
-        description: "Insira seu ID de usuário",
+        description: error.message,
         variant: "destructive",
       });
-      return;
+      setLoading(false);
     }
-
-    // Redirect to login with user parameter
-    window.location.href = `/api/login?user=${encodeURIComponent(userId)}`;
   };
 
   return (
@@ -37,31 +64,63 @@ export default function Login() {
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Login Form */}
-          <div className="space-y-4">
+          <form onSubmit={handleLogin} className="space-y-4">
+            {/* Email */}
             <div className="space-y-2">
-              <label className="text-sm font-semibold">ID do Usuário</label>
+              <Label htmlFor="email">Email</Label>
               <Input
-                placeholder="Insira seu ID de usuário"
-                value={userId}
-                onChange={(e) => setUserId(e.target.value)}
-                data-testid="input-user-id"
-                onKeyPress={(e) => {
-                  if (e.key === "Enter") {
-                    handleLogin();
-                  }
-                }}
+                id="email"
+                type="email"
+                placeholder="seu@email.com"
+                value={credentials.email}
+                onChange={(e) => setCredentials({ ...credentials, email: e.target.value })}
+                required
+                disabled={loading}
+                data-testid="input-login-email"
                 autoFocus
               />
             </div>
 
+            {/* Password */}
+            <div className="space-y-2">
+              <Label htmlFor="password">Senha</Label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Sua senha"
+                  value={credentials.password}
+                  onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
+                  required
+                  disabled={loading}
+                  data-testid="input-login-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2"
+                  disabled={loading}
+                  data-testid="button-toggle-password"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <Eye className="h-4 w-4 text-muted-foreground" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Login Button */}
             <Button
+              type="submit"
               className="w-full"
-              onClick={handleLogin}
+              disabled={loading}
               data-testid="button-login"
             >
-              Entrar
+              {loading ? "Entrando..." : "Entrar"}
             </Button>
-          </div>
+          </form>
 
           {/* Divider */}
           <div className="relative">
@@ -69,17 +128,40 @@ export default function Login() {
               <div className="w-full border-t" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">
-                novo cliente
-              </span>
+              <span className="bg-card px-2 text-muted-foreground">ou</span>
             </div>
           </div>
 
-          {/* Signup Link */}
+          {/* Google OAuth */}
           <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            onClick={() => {
+              window.location.href = "/api/auth/google";
+            }}
+            disabled={loading}
+            data-testid="button-google-login"
+          >
+            Entrar com Google
+          </Button>
+
+          {/* Signup Link */}
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-card px-2 text-muted-foreground">novo cliente</span>
+            </div>
+          </div>
+
+          <Button
+            type="button"
             variant="outline"
             className="w-full"
             onClick={() => window.location.href = "/signup"}
+            disabled={loading}
             data-testid="button-create-account"
           >
             Criar Conta Gratuita

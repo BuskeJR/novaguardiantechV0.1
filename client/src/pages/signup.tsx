@@ -3,21 +3,59 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Shield, ArrowRight } from "lucide-react";
+import { Shield, ArrowRight, Eye, EyeOff, Check, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+
+interface PasswordRequirement {
+  label: string;
+  met: boolean;
+}
 
 export default function Signup() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     firstName: "",
     lastName: "",
     tenantName: "",
+    password: "",
   });
+
+  const [passwordRequirements, setPasswordRequirements] = useState<PasswordRequirement[]>([
+    { label: "Mínimo 8 caracteres", met: false },
+    { label: "1 letra maiúscula", met: false },
+    { label: "1 letra minúscula", met: false },
+    { label: "1 número", met: false },
+    { label: "1 caractere especial (@$!%*?&)", met: false },
+  ]);
+
+  const updatePasswordRequirements = (password: string) => {
+    const requirements = [
+      { label: "Mínimo 8 caracteres", met: password.length >= 8 },
+      { label: "1 letra maiúscula", met: /[A-Z]/.test(password) },
+      { label: "1 letra minúscula", met: /[a-z]/.test(password) },
+      { label: "1 número", met: /\d/.test(password) },
+      { label: "1 caractere especial (@$!%*?&)", met: /@|\$|!|%|\*|\?|&/.test(password) },
+    ];
+    setPasswordRequirements(requirements);
+  };
+
+  const allRequirementsMet = passwordRequirements.every(r => r.met);
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!allRequirementsMet) {
+      toast({
+        title: "Erro",
+        description: "Sua senha não atende todos os requisitos",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -39,10 +77,10 @@ export default function Signup() {
         description: "Entrando na sua conta...",
       });
 
-      // Auto-login by redirecting to login
+      // Redirect to login
       setTimeout(() => {
-        window.location.href = `/api/login?user=${encodeURIComponent(data.userId)}`;
-      }, 1000);
+        window.location.href = `/api/auth/login-password?email=${encodeURIComponent(formData.email)}&password=${encodeURIComponent(formData.password)}`;
+      }, 1500);
     } catch (error: any) {
       toast({
         title: "Erro",
@@ -67,6 +105,7 @@ export default function Signup() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSignup} className="space-y-4">
+            {/* Email */}
             <div className="space-y-2">
               <Label htmlFor="email">Email *</Label>
               <Input
@@ -76,10 +115,11 @@ export default function Signup() {
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 required
-                data-testid="input-email"
+                data-testid="input-signup-email"
               />
             </div>
 
+            {/* Name Fields */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label htmlFor="firstName">Primeiro Nome *</Label>
@@ -105,6 +145,7 @@ export default function Signup() {
               </div>
             </div>
 
+            {/* Company Name */}
             <div className="space-y-2">
               <Label htmlFor="tenantName">Nome da Empresa/Rede *</Label>
               <Input
@@ -117,27 +158,83 @@ export default function Signup() {
               />
             </div>
 
-            {/* Trial Info */}
-            <div className="bg-primary/10 rounded-lg p-3 space-y-2">
-              <p className="text-sm font-semibold text-primary">🎉 Plano Gratuito</p>
-              <ul className="text-xs space-y-1 text-muted-foreground">
-                <li>✓ 100 domínios bloqueados</li>
-                <li>✓ 5 IPs na lista branca</li>
-                <li>✓ Suporte por email</li>
-                <li>✓ 14 dias de teste</li>
-              </ul>
+            {/* Password */}
+            <div className="space-y-2">
+              <Label htmlFor="password">Senha *</Label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Crie uma senha segura"
+                  value={formData.password}
+                  onChange={(e) => {
+                    setFormData({ ...formData, password: e.target.value });
+                    updatePasswordRequirements(e.target.value);
+                  }}
+                  required
+                  data-testid="input-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2"
+                  data-testid="button-toggle-password"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <Eye className="h-4 w-4 text-muted-foreground" />
+                  )}
+                </button>
+              </div>
             </div>
 
+            {/* Password Requirements */}
+            {formData.password && (
+              <div className="bg-muted/50 rounded-lg p-3 space-y-2">
+                <p className="text-xs font-semibold">Requisitos da senha:</p>
+                <ul className="space-y-1 text-xs">
+                  {passwordRequirements.map((req, i) => (
+                    <li key={i} className="flex gap-2 items-center">
+                      {req.met ? (
+                        <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
+                      ) : (
+                        <X className="h-4 w-4 text-red-500 flex-shrink-0" />
+                      )}
+                      <span className={req.met ? "text-foreground" : "text-muted-foreground"}>
+                        {req.label}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Submit Button */}
             <Button
               type="submit"
               className="w-full"
-              disabled={loading}
+              disabled={loading || !allRequirementsMet}
               data-testid="button-signup"
             >
               {loading ? "Criando conta..." : "Criar Conta Gratuita"}
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
 
+            {/* Google OAuth Button */}
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={() => {
+                window.location.href = "/api/auth/google";
+              }}
+              data-testid="button-google-signup"
+            >
+              Cadastrar com Google
+            </Button>
+
+            {/* Login Link */}
             <p className="text-xs text-center text-muted-foreground">
               Já tem conta?{" "}
               <a href="/login" className="text-primary hover:underline">

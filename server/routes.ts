@@ -5,6 +5,8 @@ import { z } from "zod";
 import { insertDomainRuleSchema, insertIpWhitelistSchema, insertTenantSchema } from "@shared/schema";
 import type { User } from "@shared/schema";
 import { stripe, PRICING_PLANS } from "./stripe-config";
+import { hashPassword, comparePassword, getPasswordErrors } from "./auth-utils";
+import passport from "passport";
 
 // Middleware to require authentication
 function requireAuth(req: Request, res: Response, next: NextFunction) {
@@ -60,6 +62,13 @@ const signupSchema = z.object({
   firstName: z.string().min(1, "Primeiro nome obrigatório"),
   lastName: z.string().min(1, "Sobrenome obrigatório"),
   tenantName: z.string().min(1, "Nome da empresa obrigatório"),
+  password: z.string().min(8, "Mínimo 8 caracteres"),
+});
+
+// Login schema
+const loginSchema = z.object({
+  email: z.string().email("Email inválido"),
+  password: z.string().min(1, "Senha obrigatória"),
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -75,17 +84,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validated = signupSchema.parse(req.body);
       
+      // Validate password strength
+      const passwordErrors = getPasswordErrors(validated.password);
+      if (passwordErrors.length > 0) {
+        return res.status(400).json({ 
+          error: "Senha fraca", 
+          details: passwordErrors 
+        });
+      }
+
       // Check if email already exists
       const existingUser = await storage.getUserByEmail(validated.email);
       if (existingUser) {
         return res.status(400).json({ error: "Email já cadastrado" });
       }
 
+      // Hash password
+      const passwordHash = await hashPassword(validated.password);
+
       // Create new user
       const newUser = await storage.createUser({
         email: validated.email,
         firstName: validated.firstName,
         lastName: validated.lastName,
+        passwordHash,
         role: "user",
       });
 
@@ -117,6 +139,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: newUser.id,
         email: newUser.email,
         tenantId: tenant.id,
+      });
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Validação falhou", details: error.errors });
+      } else {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  });
+
+  // Email/Password login endpoint
+  app.post("/api/auth/login-password", async (req: Request, res: Response) => {
+    try {
+      const validated = loginSchema.parse(req.body);
+
+      const user = await storage.getUserByEmail(validated.email);
+      if (!user || !user.passwordHash) {
+        return res.status(401).json({ 
+          error: "Email ou senha inválidos" 
+        });
+      }
+
+      const isValid = await comparePassword(validated.password, user.passwordHash);
+      if (!isValid) {
+        return res.status(401).json({ 
+          error: "Email ou senha inválidos" 
+        });
+      }
+
+      // Set session
+      (req.session as any).userId = user.id;
+      await new Promise((resolve, reject) => {
+        req.session?.save((err: any) => {
+          if (err) reject(err);
+          else resolve(null);
+        });
+      });
+
+      res.json({
+        userId: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
       });
     } catch (error: any) {
       if (error instanceof z.ZodError) {
@@ -477,6 +542,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: error.message });
     }
   });
+
+  // ===== GOOGLE OAUTH ROUTES =====
+
+  app.get(
+    "/api/auth/google",
+    passport.authenticate("google", {
+      scope: ["profile", "email"],
+    })
+  );
+
+  app.get(
+    "/api/auth/google/callback",
+    passport.authenticate("google", { failureRedirect: "/login" }),
+    (req: Request, res: Response) => {
+      res.redirect("/");
+    }
+  );
+
+  // ===== STRIPE WEBHOOK =====
 
   // Stripe webhook
   app.post("/api/webhook/stripe", async (req: Request, res: Response) => {

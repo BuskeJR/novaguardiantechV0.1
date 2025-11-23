@@ -27,10 +27,12 @@ export const sessions = pgTable(
 // ===== USERS TABLE (Required for Replit Auth) =====
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  email: varchar("email").unique(),
+  email: varchar("email").unique().notNull(),
+  passwordHash: varchar("password_hash"), // Nullable for OAuth-only users
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
+  googleId: varchar("google_id").unique(), // For Google OAuth
   role: varchar("role", { length: 20 }).notNull().default("user"), // 'admin' or 'user'
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
