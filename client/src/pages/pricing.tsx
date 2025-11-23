@@ -11,10 +11,15 @@ import { useAuth } from "@/hooks/useAuth";
 interface PricingPlan {
   name: string;
   price: number;
+  maxDevices: number;
   maxDomains: number;
   maxIps: number;
+  billingCycle: string;
+  description: string;
+  annualDiscount?: number;
   trialDays?: number;
   stripePriceId?: string;
+  popular?: boolean;
 }
 
 export default function Pricing() {
@@ -99,15 +104,15 @@ export default function Pricing() {
         </div>
 
         {/* Pricing Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {planList.map((plan) => (
             <Card
               key={plan.key}
               className={`relative flex flex-col ${
-                plan.key === "pro" ? "ring-2 ring-primary" : ""
+                plan.popular ? "ring-2 ring-primary md:scale-105" : ""
               }`}
             >
-              {plan.key === "pro" && (
+              {plan.popular && (
                 <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2">
                   Mais Popular
                 </Badge>
@@ -116,22 +121,33 @@ export default function Pricing() {
               <CardHeader>
                 <CardTitle>{plan.name}</CardTitle>
                 <CardDescription>
-                  {plan.key === "free"
-                    ? "Perfeito para começar"
-                    : "Para pequenas e médias empresas"}
+                  {plan.description}
                 </CardDescription>
               </CardHeader>
 
               <CardContent className="flex-1 flex flex-col">
+                {/* Pricing */}
                 <div className="mb-6">
                   {plan.price === 0 ? (
-                    <div className="text-3xl font-bold">Gratuito</div>
+                    <div>
+                      <div className="text-3xl font-bold">Gratuito</div>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Período de teste de {plan.trialDays} dias
+                      </p>
+                    </div>
                   ) : (
                     <div>
-                      <span className="text-4xl font-bold">
-                        ${(plan.price / 100).toFixed(2)}
-                      </span>
-                      <span className="text-muted-foreground">/mês</span>
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-4xl font-bold">
+                          R${(plan.price / 100).toFixed(2)}
+                        </span>
+                        <span className="text-muted-foreground">/mês</span>
+                      </div>
+                      {plan.annualDiscount && (
+                        <p className="text-xs text-green-600 dark:text-green-400 mt-2">
+                          Economize {plan.annualDiscount}% com plano anual
+                        </p>
+                      )}
                     </div>
                   )}
                 </div>
@@ -140,47 +156,45 @@ export default function Pricing() {
                 <ul className="space-y-3 mb-6 flex-1">
                   <li className="flex gap-2">
                     <Check className="h-5 w-5 text-green-500 flex-shrink-0" />
+                    <span className="text-sm font-medium">Até {plan.maxDevices === 0 ? "teste" : plan.maxDevices} dispositivos em rede</span>
+                  </li>
+                  <li className="flex gap-2">
+                    <Check className="h-5 w-5 text-green-500 flex-shrink-0" />
                     <span className="text-sm">{plan.maxDomains} domínios bloqueados</span>
                   </li>
                   <li className="flex gap-2">
                     <Check className="h-5 w-5 text-green-500 flex-shrink-0" />
-                    <span className="text-sm">{plan.maxIps} IPs na lista branca</span>
+                    <span className="text-sm">{plan.maxIps} endereços IP na lista branca</span>
                   </li>
                   <li className="flex gap-2">
                     <Check className="h-5 w-5 text-green-500 flex-shrink-0" />
-                    <span className="text-sm">Suporte por email</span>
+                    <span className="text-sm">Dashboard de controle web</span>
+                  </li>
+                  <li className="flex gap-2">
+                    <Check className="h-5 w-5 text-green-500 flex-shrink-0" />
+                    <span className="text-sm">Relatórios de bloqueio</span>
                   </li>
                   {plan.trialDays && (
                     <li className="flex gap-2">
                       <Check className="h-5 w-5 text-green-500 flex-shrink-0" />
-                      <span className="text-sm">{plan.trialDays} dias de teste</span>
+                      <span className="text-sm">Sem cartão de crédito</span>
+                    </li>
+                  )}
+                  {plan.key !== "free" && plan.key !== "residencial" && (
+                    <li className="flex gap-2">
+                      <Check className="h-5 w-5 text-green-500 flex-shrink-0" />
+                      <span className="text-sm">Suporte prioritário</span>
                     </li>
                   )}
                   {plan.key === "pro" && (
                     <>
                       <li className="flex gap-2">
                         <Check className="h-5 w-5 text-green-500 flex-shrink-0" />
-                        <span className="text-sm">Suporte prioritário</span>
+                        <span className="text-sm">Suporte por chat 24/7</span>
                       </li>
                       <li className="flex gap-2">
                         <Check className="h-5 w-5 text-green-500 flex-shrink-0" />
-                        <span className="text-sm">Relatórios avançados</span>
-                      </li>
-                    </>
-                  )}
-                  {plan.key === "enterprise" && (
-                    <>
-                      <li className="flex gap-2">
-                        <Check className="h-5 w-5 text-green-500 flex-shrink-0" />
-                        <span className="text-sm">Suporte 24/7 dedicado</span>
-                      </li>
-                      <li className="flex gap-2">
-                        <Check className="h-5 w-5 text-green-500 flex-shrink-0" />
-                        <span className="text-sm">API ilimitada</span>
-                      </li>
-                      <li className="flex gap-2">
-                        <Check className="h-5 w-5 text-green-500 flex-shrink-0" />
-                        <span className="text-sm">Integração customizada</span>
+                        <span className="text-sm">Análise avançada de tráfego</span>
                       </li>
                     </>
                   )}
@@ -188,7 +202,7 @@ export default function Pricing() {
 
                 <Button
                   className="w-full"
-                  variant={plan.key === "pro" ? "default" : "outline"}
+                  variant={plan.popular ? "default" : "outline"}
                   onClick={() => handleSelectPlan(plan.key)}
                   disabled={loading}
                   data-testid={`button-select-${plan.key}`}

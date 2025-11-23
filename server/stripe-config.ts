@@ -14,24 +14,46 @@ export const stripe = stripeSecretKey
 
 export const PRICING_PLANS = {
   free: {
-    name: "Gratuito",
+    name: "Plano Gratuito",
     price: 0,
+    maxDevices: 0,
     maxDomains: 100,
     maxIps: 5,
+    billingCycle: "gratuito",
     trialDays: 3,
+    description: "Perfeito para começar",
+  },
+  residencial: {
+    name: "Plano Residencial",
+    price: 1990, // R$19,90 em centavos
+    maxDevices: 10,
+    maxDomains: 500,
+    maxIps: 10,
+    billingCycle: "mensal",
+    annualDiscount: 15, // 15% de desconto anual
+    stripePriceId: process.env.STRIPE_RESIDENCIAL_PRICE_ID,
+    description: "1 a 10 dispositivos em rede",
+  },
+  plus: {
+    name: "Plano Plus Empresarial",
+    price: 4790, // R$47,90 em centavos
+    maxDevices: 25,
+    maxDomains: 2000,
+    maxIps: 25,
+    billingCycle: "mensal",
+    annualDiscount: 20, // 20% de desconto anual
+    stripePriceId: process.env.STRIPE_PLUS_PRICE_ID,
+    description: "1 a 25 dispositivos em rede",
   },
   pro: {
-    name: "Profissional",
-    price: 9900, // $99 em centavos
-    maxDomains: 1000,
+    name: "Plano Pro Empresarial",
+    price: 8990, // R$89,90 em centavos
+    maxDevices: 50,
+    maxDomains: 5000,
     maxIps: 50,
+    billingCycle: "mensal",
     stripePriceId: process.env.STRIPE_PRO_PRICE_ID,
-  },
-  enterprise: {
-    name: "Empresarial",
-    price: 29900, // $299 em centavos
-    maxDomains: 10000,
-    maxIps: 500,
-    stripePriceId: process.env.STRIPE_ENTERPRISE_PRICE_ID,
+    description: "1 a 50 dispositivos em rede",
+    popular: true,
   },
 };
