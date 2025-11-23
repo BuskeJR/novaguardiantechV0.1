@@ -912,6 +912,209 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // DNS Status Page - HTML Visual
+  app.get("/dns-status", async (req: Request, res: Response) => {
+    try {
+      const tenants = await storage.getAllTenants();
+      let allBlockedDomains: string[] = [];
+
+      for (const tenant of tenants) {
+        if (tenant.isActive) {
+          const rules = await storage.getDomainRulesByTenantId(tenant.id);
+          allBlockedDomains = allBlockedDomains.concat(
+            rules
+              .filter(r => r.status === "active")
+              .map(r => r.domain.toLowerCase())
+          );
+        }
+      }
+
+      const html = `
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Status DNS - NovaGuardian</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+    .container {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      max-width: 600px;
+      width: 100%;
+      padding: 40px;
+    }
+    h1 { color: #333; margin-bottom: 10px; font-size: 28px; }
+    .status { 
+      display: inline-block;
+      background: #10b981;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 30px;
+    }
+    .domains-section {
+      background: #f3f4f6;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .domains-section h2 {
+      font-size: 16px;
+      color: #666;
+      margin-bottom: 15px;
+    }
+    .domains-list {
+      list-style: none;
+    }
+    .domains-list li {
+      background: white;
+      padding: 12px 16px;
+      border-left: 4px solid #ef4444;
+      margin-bottom: 10px;
+      border-radius: 4px;
+      font-family: 'Monaco', 'Courier New', monospace;
+      color: #333;
+    }
+    .empty {
+      color: #999;
+      font-style: italic;
+      padding: 20px;
+      text-align: center;
+    }
+    .test-form {
+      margin-top: 30px;
+      border-top: 1px solid #e5e7eb;
+      padding-top: 20px;
+    }
+    .test-form h2 {
+      font-size: 16px;
+      color: #333;
+      margin-bottom: 15px;
+    }
+    .form-group {
+      display: flex;
+      gap: 10px;
+    }
+    input {
+      flex: 1;
+      padding: 10px 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    button {
+      padding: 10px 20px;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.2s;
+    }
+    button:hover { background: #5568d3; }
+    .result {
+      margin-top: 15px;
+      padding: 15px;
+      border-radius: 6px;
+      display: none;
+    }
+    .result.success {
+      background: #d1fae5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+    }
+    .result.error {
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🛡️ NovaGuardian DNS Status</h1>
+    <span class="status">✅ Sistema Operacional</span>
+
+    <div class="domains-section">
+      <h2>Domínios Bloqueados no Sistema</h2>
+      <ul class="domains-list">
+        ${allBlockedDomains.length > 0 
+          ? allBlockedDomains.map(d => `<li>🚫 ${d}</li>`).join('')
+          : '<li class="empty">Nenhum domínio bloqueado</li>'
+        }
+      </ul>
+      <p style="text-align: center; color: #666; font-size: 14px; margin-top: 10px;">
+        <strong>${allBlockedDomains.length}</strong> domínio(s) bloqueado(s)
+      </p>
+    </div>
+
+    <div class="test-form">
+      <h2>Teste um Domínio</h2>
+      <div class="form-group">
+        <input type="text" id="domainInput" placeholder="ex: tiktok.com" value="google.com">
+        <button onclick="testDomain()">Testar</button>
+      </div>
+      <div class="result" id="result"></div>
+    </div>
+  </div>
+
+  <script>
+    async function testDomain() {
+      const domain = document.getElementById('domainInput').value;
+      if (!domain) { alert('Digite um domínio'); return; }
+
+      const resultDiv = document.getElementById('result');
+      resultDiv.style.display = 'none';
+
+      try {
+        const res = await fetch('/api/dns/test-public?domain=' + encodeURIComponent(domain));
+        const data = await res.json();
+        
+        resultDiv.className = 'result ' + (data.blocked ? 'error' : 'success');
+        resultDiv.innerHTML = '<strong>' + data.message + '</strong>';
+        resultDiv.style.display = 'block';
+      } catch (err) {
+        resultDiv.className = 'result error';
+        resultDiv.innerHTML = '<strong>❌ Erro:</strong> ' + err.message;
+        resultDiv.style.display = 'block';
+      }
+    }
+
+    document.getElementById('domainInput').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') testDomain();
+    });
+
+    // Teste automático ao carregar
+    window.addEventListener('load', function() {
+      setTimeout(() => testDomain(), 500);
+    });
+  </script>
+</body>
+</html>
+      `;
+
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.send(html);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // DNS Test endpoint - PUBLIC - Testa se domínios estão bloqueados
   app.get("/api/dns/test-public", async (req: Request, res: Response) => {
     try {
