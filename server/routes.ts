@@ -5,6 +5,7 @@ import { z } from "zod";
 import { insertDomainRuleSchema, insertIpWhitelistSchema, insertTenantSchema } from "@shared/schema";
 import type { User } from "@shared/schema";
 import { hashPassword, comparePassword, getPasswordErrors } from "./auth-utils";
+import { sendPasswordResetEmail } from "./email";
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 
@@ -645,9 +646,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       await storage.createPasswordResetToken(user.id, resetCode, expiresAt);
 
-      // TODO: Send email with reset code
-      // For now, log it (in production, use email service)
-      console.log(`Reset code for ${email}: ${resetCode}`);
+      // Send email with reset code
+      try {
+        await sendPasswordResetEmail(email, resetCode, user.firstName || undefined);
+      } catch (emailError) {
+        console.error("Failed to send reset email:", emailError);
+        // Still return success even if email fails (in dev mode)
+        if (process.env.NODE_ENV !== "production") {
+          console.log(`[DEV] Reset code for ${email}: ${resetCode}`);
+        }
+      }
 
       res.json({ 
         success: true, 
