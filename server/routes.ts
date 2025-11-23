@@ -7,7 +7,6 @@ import type { User } from "@shared/schema";
 import { hashPassword, comparePassword, getPasswordErrors } from "./auth-utils";
 import { sendPasswordResetEmail } from "./email";
 import { createBlockRule, deleteBlockRule, getZoneInfo, listRules } from "./cloudflare";
-import { startDnsServer } from "./dns-server";
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 
@@ -909,13 +908,5 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   const httpServer = createServer(app);
-  
-  // Start DNS blocking server
-  try {
-    startDnsServer();
-  } catch (error) {
-    console.error("⚠️  Erro ao iniciar servidor DNS:", error);
-  }
-  
   return httpServer;
 }
