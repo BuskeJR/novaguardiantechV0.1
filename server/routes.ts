@@ -912,6 +912,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // DNS Test endpoint - Verifica se um domínio está bloqueado
+  app.get("/api/dns/test", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const { domain } = req.query;
+
+      if (!domain || typeof domain !== "string") {
+        return res.status(400).json({ error: "Domínio obrigatório" });
+      }
+
+      const user = req.user as User;
+      const tenant = await getUserTenant(user.id);
+
+      // Busca domínios bloqueados do tenant
+      const rules = await storage.getDomainRulesByTenantId(tenant.id);
+      const normalizedDomain = domain.toLowerCase();
+      
+      // Verifica se está bloqueado (exato ou wildcard)
+      const isBlocked = rules.some(rule => {
+        if (rule.status !== "active") return false;
+        
+        const ruleDomain = rule.domain.toLowerCase();
+        if (ruleDomain === normalizedDomain) return true;
+        
+        // Verificação de wildcard
+        if (normalizedDomain.endsWith(ruleDomain) && normalizedDomain.split(".").length > ruleDomain.split(".").length) {
+          return true;
+        }
+        
+        return false;
+      });
+
+      res.json({
+        success: true,
+        domain: normalizedDomain,
+        blocked: isBlocked,
+        message: isBlocked 
+          ? `✅ Domínio ${domain} ESTÁ BLOQUEADO pelo NovaGuardian`
+          : `❌ Domínio ${domain} NÃO está bloqueado (será resolvido normalmente)`,
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
