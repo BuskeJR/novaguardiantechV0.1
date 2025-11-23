@@ -745,16 +745,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const planData = MERCADOPAGO_PRICING_PLANS[plan as keyof typeof MERCADOPAGO_PRICING_PLANS];
 
-      if (plan === "free") {
-        // Free plan - just update subscription status
-        await storage.updateTenant(tenant.id, {
-          subscriptionStatus: "active",
-          currentPlan: "free",
-        });
-
-        return res.json({ success: true, planUpgraded: "free" });
-      }
-
       // Create MercadoPago preference
       const preference = new Preference(mercadopago);
       

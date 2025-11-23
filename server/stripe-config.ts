@@ -13,16 +13,6 @@ export const stripe = stripeSecretKey
   : null;
 
 export const PRICING_PLANS = {
-  free: {
-    name: "Plano Gratuito",
-    price: 0,
-    maxDevices: 0,
-    maxDomains: 100,
-    maxIps: 5,
-    billingCycle: "gratuito",
-    trialDays: 3,
-    description: "Perfeito para começar",
-  },
   residencial: {
     name: "Plano Residencial",
     price: 1990, // R$19,90 em centavos

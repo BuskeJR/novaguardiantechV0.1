@@ -13,16 +13,6 @@ export const mercadopago = accessToken
   : null;
 
 export const MERCADOPAGO_PRICING_PLANS = {
-  free: {
-    name: "Plano Gratuito",
-    price: 0,
-    maxDevices: 0,
-    maxDomains: 100,
-    maxIps: 5,
-    billingCycle: "gratuito",
-    trialDays: 3,
-    description: "Perfeito para começar",
-  },
   residencial: {
     name: "Plano Residencial",
     price: 19.90,

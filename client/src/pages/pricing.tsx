@@ -31,8 +31,6 @@ interface PricingPlan {
 const getPlanIcon = (key: string) => {
   const iconProps = "h-8 w-8";
   switch (key) {
-    case "free":
-      return <Shield className={`${iconProps} text-slate-400`} />;
     case "residencial":
       return <Home className={`${iconProps} text-blue-500`} />;
     case "plus":
@@ -47,63 +45,54 @@ const getPlanIcon = (key: string) => {
 const features = [
   {
     name: "Dispositivos em Rede",
-    free: "Teste",
     residencial: "1-10",
     plus: "1-25",
     pro: "1-50",
   },
   {
     name: "Domínios Bloqueados",
-    free: "50",
     residencial: "500",
     plus: "2.500",
     pro: "Ilimitados",
   },
   {
     name: "IPs na Lista Branca",
-    free: "5",
     residencial: "20",
     plus: "50",
     pro: "Ilimitados",
   },
   {
     name: "Dashboard Web",
-    free: true,
     residencial: true,
     plus: true,
     pro: true,
   },
   {
     name: "Relatórios de Bloqueio",
-    free: true,
     residencial: true,
     plus: true,
     pro: true,
   },
   {
     name: "Suporte por Email",
-    free: false,
     residencial: true,
     plus: true,
     pro: true,
   },
   {
     name: "Suporte Prioritário",
-    free: false,
     residencial: false,
     plus: true,
     pro: true,
   },
   {
     name: "Suporte Chat 24/7",
-    free: false,
     residencial: false,
     plus: false,
     pro: true,
   },
   {
     name: "Análise Avançada",
-    free: false,
     residencial: false,
     plus: false,
     pro: true,
@@ -113,15 +102,15 @@ const features = [
 const faqs = [
   {
     question: "Qual é a diferença entre os planos?",
-    answer: "Cada plano oferece diferentes limites de dispositivos, domínios e endereços IP. O plano gratuito é ideal para teste, enquanto os planos pagos são otimizados para residências e empresas de diferentes tamanhos.",
+    answer: "Cada plano oferece diferentes limites de dispositivos, domínios e endereços IP, otimizados para residências e empresas de diferentes tamanhos.",
   },
   {
     question: "Posso mudar de plano depois?",
     answer: "Sim, você pode fazer upgrade ou downgrade de seu plano a qualquer momento. As alterações entram em vigor no próximo período de faturamento.",
   },
   {
-    question: "Há período de teste gratuito?",
-    answer: "Sim, todos os planos pagos incluem 7 dias de teste gratuito sem necessidade de cartão de crédito.",
+    question: "Qual é a política de reembolso?",
+    answer: "Oferecemos garantia de reembolso integral em até 7 dias após a compra. Se não estiver satisfeito, reembolsamos 100% do seu pagamento, sem perguntas.",
   },
   {
     question: "Como funcionam os descontos anuais?",
@@ -129,7 +118,7 @@ const faqs = [
   },
   {
     question: "Posso usar em múltiplas redes?",
-    answer: "Cada tenant (conta) é independente. Se precisar gerenciar múltiplas redes, você pode criar múltiplas contas.",
+    answer: "Cada conta é independente. Se precisar gerenciar múltiplas redes, você pode criar múltiplas contas.",
   },
   {
     question: "E se exceder meu limite?",
@@ -208,10 +197,12 @@ export default function Pricing() {
   }, [toast]);
 
   const planList = plans
-    ? Object.entries(plans).map(([key, plan]: any) => ({
-        key,
-        ...plan,
-      }))
+    ? Object.entries(plans)
+        .filter(([key]) => key !== "free")
+        .map(([key, plan]: any) => ({
+          key,
+          ...plan,
+        }))
     : [];
 
   const calculatePrice = (plan: any) => {

@@ -36,14 +36,21 @@ export default function Home() {
     enabled: isAuthenticated,
   });
 
+  // Redireciona para preços se não tem plano pago
+  useEffect(() => {
+    if (tenant && isAuthenticated && (!tenant.currentPlan || tenant.currentPlan === "free")) {
+      window.location.href = "/pricing";
+    }
+  }, [tenant, isAuthenticated]);
+
   const { data: domains = [], isLoading: domainsLoading } = useQuery<DomainRule[]>({
     queryKey: ["/api/domains"],
-    enabled: isAuthenticated,
+    enabled: isAuthenticated && !!tenant?.id,
   });
 
   const { data: whitelist = [], isLoading: whitelistLoading } = useQuery<IpWhitelist[]>({
     queryKey: ["/api/whitelist"],
-    enabled: isAuthenticated,
+    enabled: isAuthenticated && !!tenant?.id,
   });
 
   if (authLoading || tenantLoading) {
