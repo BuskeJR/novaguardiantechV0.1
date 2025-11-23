@@ -4,7 +4,15 @@
  */
 
 const CLOUDFLARE_API_URL = "https://api.cloudflare.com/client/v4";
-const API_TOKEN = process.env.CLOUDFLARE_API_TOKEN;
+
+// Get API token dynamically (not at module load time)
+function getApiToken(): string {
+  const token = process.env.CLOUDFLARE_API_TOKEN;
+  if (!token) {
+    throw new Error("CLOUDFLARE_API_TOKEN not configured in environment variables");
+  }
+  return token;
+}
 
 interface CloudflareError {
   code: number;
@@ -31,9 +39,7 @@ export async function createBlockRule(
   ruleName: string
 ): Promise<{ success: boolean; ruleId?: string; error?: string }> {
   try {
-    if (!API_TOKEN) {
-      throw new Error("CLOUDFLARE_API_TOKEN not configured");
-    }
+    const token = getApiToken();
 
     // Sanitize domain name for rule name (max 255 chars)
     const safeDomain = domain.replace(/[^a-zA-Z0-9.-]/g, "");
@@ -48,7 +54,7 @@ export async function createBlockRule(
       {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${API_TOKEN}`,
+          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -95,16 +101,14 @@ export async function deleteBlockRule(
   ruleId: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    if (!API_TOKEN) {
-      throw new Error("CLOUDFLARE_API_TOKEN not configured");
-    }
+    const token = getApiToken();
 
     const response = await fetch(
       `${CLOUDFLARE_API_URL}/zones/${zoneId}/firewall/rules/${ruleId}`,
       {
         method: "DELETE",
         headers: {
-          Authorization: `Bearer ${API_TOKEN}`,
+          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
       }
@@ -141,16 +145,14 @@ export async function getZoneInfo(zoneId: string): Promise<{
   error?: string;
 }> {
   try {
-    if (!API_TOKEN) {
-      throw new Error("CLOUDFLARE_API_TOKEN not configured");
-    }
+    const token = getApiToken();
 
     const response = await fetch(
       `${CLOUDFLARE_API_URL}/zones/${zoneId}`,
       {
         method: "GET",
         headers: {
-          Authorization: `Bearer ${API_TOKEN}`,
+          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
       }
@@ -189,16 +191,14 @@ export async function listRules(zoneId: string): Promise<{
   error?: string;
 }> {
   try {
-    if (!API_TOKEN) {
-      throw new Error("CLOUDFLARE_API_TOKEN not configured");
-    }
+    const token = getApiToken();
 
     const response = await fetch(
       `${CLOUDFLARE_API_URL}/zones/${zoneId}/firewall/rules?per_page=100`,
       {
         method: "GET",
         headers: {
-          Authorization: `Bearer ${API_TOKEN}`,
+          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
       }
