@@ -92,7 +92,7 @@ export const domainRules = pgTable("domain_rules", {
   kind: varchar("kind", { length: 20 }).notNull().default("exact"), // 'exact' or 'regex'
   status: varchar("status", { length: 20 }).notNull().default("active"), // 'active' or 'inactive'
   reason: text("reason"), // Why this domain is blocked
-  createdBy: varchar("created_by").references(() => users.id),
+  createdBy: varchar("created_by").references(() => users.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -128,7 +128,7 @@ export const ipWhitelist = pgTable("ip_whitelist", {
   tenantId: varchar("tenant_id").notNull().references(() => tenants.id, { onDelete: "cascade" }),
   ipAddress: varchar("ip_address", { length: 45 }).notNull(), // IPv4 or IPv6
   label: varchar("label", { length: 255 }), // Friendly name for this IP
-  createdBy: varchar("created_by").references(() => users.id),
+  createdBy: varchar("created_by").references(() => users.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -156,8 +156,8 @@ export type IpWhitelist = typeof ipWhitelist.$inferSelect;
 // ===== AUDIT LOGS TABLE (Track all actions) =====
 export const auditLogs = pgTable("audit_logs", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  actorUserId: varchar("actor_user_id").references(() => users.id),
-  tenantId: varchar("tenant_id").references(() => tenants.id),
+  actorUserId: varchar("actor_user_id").references(() => users.id, { onDelete: "set null" }),
+  tenantId: varchar("tenant_id").references(() => tenants.id, { onDelete: "cascade" }),
   action: varchar("action", { length: 100 }).notNull(), // e.g., 'domain_added', 'domain_removed', 'ip_whitelisted'
   resourceType: varchar("resource_type", { length: 50 }), // e.g., 'domain', 'ip', 'tenant'
   resourceId: varchar("resource_id"),
