@@ -23,14 +23,21 @@ export default function CloudflareSetup() {
 
     setIsLoading(true);
     try {
-      const response = await apiRequest("/api/cloudflare/configure", {
+      const response = await fetch("/api/cloudflare/configure", {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ zoneId: zoneId.trim() }),
       });
 
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Erro ao configurar Cloudflare");
+      }
+
       toast({
         title: "Sucesso!",
-        description: `Cloudflare configurado para: ${response.message}`,
+        description: data.message || "Cloudflare configurado com sucesso!",
       });
       setZoneId("");
     } catch (error: any) {
