@@ -1,0 +1,228 @@
+/**
+ * Cloudflare API Integration
+ * Handles domain blocking/whitelisting through Cloudflare Firewall Rules
+ */
+
+const CLOUDFLARE_API_URL = "https://api.cloudflare.com/client/v4";
+const API_TOKEN = process.env.CLOUDFLARE_API_TOKEN;
+
+interface CloudflareError {
+  code: number;
+  message: string;
+}
+
+interface CloudflareRule {
+  id: string;
+  name: string;
+  expression: string;
+  action: string;
+}
+
+/**
+ * Creates a firewall rule in Cloudflare to block a domain
+ * @param zoneId - Cloudflare Zone ID (get from account)
+ * @param domain - Domain to block (e.g., facebook.com)
+ * @param ruleName - Human-readable name for the rule
+ * @returns Rule ID or error
+ */
+export async function createBlockRule(
+  zoneId: string,
+  domain: string,
+  ruleName: string
+): Promise<{ success: boolean; ruleId?: string; error?: string }> {
+  try {
+    if (!API_TOKEN) {
+      throw new Error("CLOUDFLARE_API_TOKEN not configured");
+    }
+
+    // Sanitize domain name for rule name (max 255 chars)
+    const safeDomain = domain.replace(/[^a-zA-Z0-9.-]/g, "");
+    const finalRuleName = `BLOCK-${safeDomain.substring(0, 240)}`;
+
+    // Create expression to match the domain
+    // Matches: domain.com, www.domain.com, subdomain.domain.com
+    const expression = `(cf.http.request.uri.host eq "${domain}" or cf.http.request.uri.host contains ".${domain}")`;
+
+    const response = await fetch(
+      `${CLOUDFLARE_API_URL}/zones/${zoneId}/firewall/rules`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${API_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: finalRuleName,
+          description: `Auto-generated rule to block ${domain}`,
+          expression,
+          action: "block",
+          priority: 1,
+        }),
+      }
+    );
+
+    const data = await response.json() as any;
+
+    if (!response.ok || !data.success) {
+      const error = data.errors?.[0] || { message: "Unknown error" };
+      return {
+        success: false,
+        error: `Cloudflare: ${error.message}`,
+      };
+    }
+
+    return {
+      success: true,
+      ruleId: data.result?.id,
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return {
+      success: false,
+      error: `Failed to create rule: ${message}`,
+    };
+  }
+}
+
+/**
+ * Deletes a firewall rule from Cloudflare
+ * @param zoneId - Cloudflare Zone ID
+ * @param ruleId - Rule ID to delete
+ * @returns Success status or error
+ */
+export async function deleteBlockRule(
+  zoneId: string,
+  ruleId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    if (!API_TOKEN) {
+      throw new Error("CLOUDFLARE_API_TOKEN not configured");
+    }
+
+    const response = await fetch(
+      `${CLOUDFLARE_API_URL}/zones/${zoneId}/firewall/rules/${ruleId}`,
+      {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${API_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    const data = await response.json() as any;
+
+    if (!response.ok || !data.success) {
+      const error = data.errors?.[0] || { message: "Unknown error" };
+      return {
+        success: false,
+        error: `Cloudflare: ${error.message}`,
+      };
+    }
+
+    return { success: true };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return {
+      success: false,
+      error: `Failed to delete rule: ${message}`,
+    };
+  }
+}
+
+/**
+ * Gets zone information from Cloudflare
+ * Useful for testing connection and getting Zone ID
+ * @returns Zone information or error
+ */
+export async function getZoneInfo(zoneId: string): Promise<{
+  success: boolean;
+  zone?: any;
+  error?: string;
+}> {
+  try {
+    if (!API_TOKEN) {
+      throw new Error("CLOUDFLARE_API_TOKEN not configured");
+    }
+
+    const response = await fetch(
+      `${CLOUDFLARE_API_URL}/zones/${zoneId}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${API_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    const data = await response.json() as any;
+
+    if (!response.ok || !data.success) {
+      const error = data.errors?.[0] || { message: "Unknown error" };
+      return {
+        success: false,
+        error: `Cloudflare: ${error.message}`,
+      };
+    }
+
+    return {
+      success: true,
+      zone: data.result,
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return {
+      success: false,
+      error: `Failed to get zone info: ${message}`,
+    };
+  }
+}
+
+/**
+ * Lists all firewall rules for a zone
+ * Useful for debugging and monitoring
+ */
+export async function listRules(zoneId: string): Promise<{
+  success: boolean;
+  rules?: CloudflareRule[];
+  error?: string;
+}> {
+  try {
+    if (!API_TOKEN) {
+      throw new Error("CLOUDFLARE_API_TOKEN not configured");
+    }
+
+    const response = await fetch(
+      `${CLOUDFLARE_API_URL}/zones/${zoneId}/firewall/rules?per_page=100`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${API_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    const data = await response.json() as any;
+
+    if (!response.ok || !data.success) {
+      const error = data.errors?.[0] || { message: "Unknown error" };
+      return {
+        success: false,
+        error: `Cloudflare: ${error.message}`,
+      };
+    }
+
+    return {
+      success: true,
+      rules: data.result,
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return {
+      success: false,
+      error: `Failed to list rules: ${message}`,
+    };
+  }
+}

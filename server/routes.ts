@@ -6,6 +6,7 @@ import { insertDomainRuleSchema, insertIpWhitelistSchema, insertTenantSchema } f
 import type { User } from "@shared/schema";
 import { hashPassword, comparePassword, getPasswordErrors } from "./auth-utils";
 import { sendPasswordResetEmail } from "./email";
+import { createBlockRule, deleteBlockRule, getZoneInfo, listRules } from "./cloudflare";
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 
@@ -267,6 +268,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         createdBy: user.id,
       } as any);
 
+      // Try to sync with Cloudflare if zone is configured
+      if (tenant.cloudflareZoneId && domain.status === "active") {
+        const cfResult = await createBlockRule(
+          tenant.cloudflareZoneId,
+          domain.domain,
+          `BLOCK-${domain.domain}`
+        );
+        
+        if (!cfResult.success) {
+          console.warn(`Cloudflare sync warning for domain ${domain.domain}: ${cfResult.error}`);
+          // Don't fail the request, just log the warning
+        }
+      }
+
       await createAuditLog(
         user.id,
         tenant.id,
@@ -326,6 +341,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const success = await storage.deleteDomainRule(id);
+
+      // Note: Cloudflare rule deletion would require storing the rule ID in our database
+      // For now, the rule will remain in Cloudflare but be marked inactive here
+      // TODO: Add cloudflareRuleId field to domainRules table for cleanup
 
       await createAuditLog(
         user.id,
@@ -787,6 +806,102 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
 
       res.json(updated);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // ===== CLOUDFLARE INTEGRATION ROUTES =====
+
+  // Test Cloudflare connection and get zone info
+  app.post("/api/cloudflare/test", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const user = req.user as User;
+      const tenant = await getUserTenant(user.id);
+      const { zoneId } = req.body;
+
+      if (!zoneId) {
+        return res.status(400).json({ error: "Zone ID obrigatório" });
+      }
+
+      const result = await getZoneInfo(zoneId);
+      if (!result.success) {
+        return res.status(400).json({ error: result.error });
+      }
+
+      res.json({
+        success: true,
+        zone: result.zone,
+        message: "Conexão com Cloudflare bem-sucedida!"
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Configure Cloudflare Zone ID for tenant
+  app.post("/api/cloudflare/configure", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const user = req.user as User;
+      const tenant = await getUserTenant(user.id);
+      const { zoneId } = req.body;
+
+      if (!zoneId) {
+        return res.status(400).json({ error: "Zone ID obrigatório" });
+      }
+
+      // Verify zone exists and is accessible
+      const zoneInfo = await getZoneInfo(zoneId);
+      if (!zoneInfo.success) {
+        return res.status(400).json({ error: `Zona inválida: ${zoneInfo.error}` });
+      }
+
+      // Update tenant with Cloudflare Zone ID
+      const updated = await storage.updateTenant(tenant.id, {
+        cloudflareZoneId: zoneId,
+      });
+
+      await createAuditLog(
+        user.id,
+        tenant.id,
+        "cloudflare_configured",
+        "tenant",
+        tenant.id,
+        { 
+          zoneId,
+          zoneName: zoneInfo.zone?.name
+        }
+      );
+
+      res.json({
+        success: true,
+        tenant: updated,
+        message: `Cloudflare configurado para zona: ${zoneInfo.zone?.name}`
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // List all Cloudflare rules for the tenant
+  app.get("/api/cloudflare/rules", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const user = req.user as User;
+      const tenant = await getUserTenant(user.id);
+
+      if (!tenant.cloudflareZoneId) {
+        return res.status(400).json({ error: "Cloudflare não configurado para este tenant" });
+      }
+
+      const result = await listRules(tenant.cloudflareZoneId);
+      if (!result.success) {
+        return res.status(400).json({ error: result.error });
+      }
+
+      res.json({
+        success: true,
+        rules: result.rules,
+      });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
