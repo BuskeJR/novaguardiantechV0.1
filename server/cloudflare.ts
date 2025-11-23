@@ -69,7 +69,7 @@ export async function createBlockRule(
           phase: "http_request_firewall_managed",
           rules: [
             {
-              action: "managed_challenge",
+              action: "challenge",
               expression: cfExpression,
               description: `Block ${domain}`,
             }
