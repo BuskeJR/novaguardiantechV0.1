@@ -66,10 +66,10 @@ export async function createBlockRule(
           name: finalRuleName,
           description: `Auto-generated rule to block ${domain}`,
           kind: "zone",
-          phase: "http_request_firewall",
+          phase: "http_request_firewall_managed",
           rules: [
             {
-              action: "block",
+              action: "managed_challenge",
               expression: cfExpression,
               description: `Block ${domain}`,
             }
