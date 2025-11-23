@@ -38,8 +38,13 @@ export default function Home() {
 
   // Redireciona para preços se não tem plano pago
   useEffect(() => {
-    if (tenant && isAuthenticated && (!tenant.currentPlan || tenant.currentPlan === "free")) {
-      window.location.href = "/pricing";
+    if (tenant && isAuthenticated) {
+      const paidPlans = ["residencial", "plus", "pro"];
+      const hasPaidPlan = tenant.currentPlan && paidPlans.includes(tenant.currentPlan);
+      
+      if (!hasPaidPlan) {
+        window.location.href = "/pricing";
+      }
     }
   }, [tenant, isAuthenticated]);
 

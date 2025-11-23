@@ -158,6 +158,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ownerId: newUser.id,
         isActive: true,
         subscriptionStatus: "trial",
+        currentPlan: "free",
       });
 
       // Log signup
@@ -226,6 +227,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           ownerId: user.id,
           isActive: true,
           subscriptionStatus: "trial",
+          currentPlan: "free",
         });
 
         await createAuditLog(
