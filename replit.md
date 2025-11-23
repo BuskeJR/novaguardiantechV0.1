@@ -130,12 +130,19 @@ Based on `design_guidelines.md`:
    - Error handling with toasts
    - Empty states with helpful CTAs
 
+8. **Email System (Password Reset)**
+   - SendGrid integration for transactional emails
+   - Password reset via 6-digit code sent to email
+   - Secure token expiration (15 minutes)
+   - Professional HTML email templates
+   - Currently using: scnovatec@gmail.com (can upgrade to custom domain)
+
 ### Pending Implementation
 
-- **Backend APIs** (Task 2)
-- **Stripe payment integration**
-- **DNS configuration sync**
+- **Cloudflare DNS integration** (Next phase)
+- **MercadoPago payment integration** (Final phase - PIX + Cartão)
 - **Real-time statistics**
+- **Domain-based email authentication** (when user has custom domain)
 
 ## 📁 Project Structure
 
@@ -174,6 +181,8 @@ Based on `design_guidelines.md`:
 │   ├── index-prod.ts        # Production server
 │   ├── routes.ts            # API route definitions
 │   ├── storage.ts           # Data access layer
+│   ├── email.ts             # SendGrid email integration
+│   ├── auth-utils.ts        # Password hashing & validation
 │   └── replitAuth.ts        # Replit Auth setup (pending)
 │
 ├── shared/                   # Shared types and schemas
@@ -206,23 +215,32 @@ All React components and pages built with:
 - Loading and error states
 - Accessibility (data-testid attributes)
 - Type-safe with TypeScript + Zod
+- Database migrations with Drizzle ORM
+- Password reset via email flow
 
-### Phase 2: Backend (NEXT)
+### Phase 2: Backend & Email ✅ PARTIALLY COMPLETE
 
-Implement:
-- Replit Auth setup (`replitAuth.ts`)
-- API endpoints for domains, whitelist, tenants, audit logs
-- Database storage layer (replace MemStorage with DatabaseStorage)
-- Database migrations (`npm run db:push`)
-- Seed data for development
+Completed:
+- ✅ User authentication (signup/login with password)
+- ✅ Password reset flow with email verification
+- ✅ SendGrid integration for transactional emails
+- ✅ Admin user management
+- ✅ Database foreign key constraints (SET NULL for soft deletions)
+- ✅ Audit logging system
+- ✅ All REST API endpoints
 
-### Phase 3: Integration & Testing
+Still needed:
+- Cloudflare DNS configuration sync
+- MercadoPago payment integration (PIX + Cartão)
+- Real-time DNS statistics
 
-- Connect frontend to backend APIs
+### Phase 3: Payment & DNS (NEXT)
+
+- **Cloudflare Integration** - Block/whitelist domains via Cloudflare API
+- **MercadoPago** - Subscription payment processing
+- **Email Domain Upgrade** - Change from scnovatec@gmail.com to custom domain when available
 - End-to-end testing
-- DNS configuration system
-- Stripe payment integration
-- Documentation updates
+- Production deployment documentation
 
 ## 🧪 Testing
 
@@ -236,13 +254,25 @@ Examples:
 
 ## 📝 Environment Variables
 
+### Secrets (Replit Secrets)
+
+```
+DATABASE_URL          - PostgreSQL connection string (auto-created by Replit)
+SESSION_SECRET        - Express session secret key
+SENDGRID_API_KEY      - SendGrid API key for email sending
+```
+
+### Shared Environment Variables
+
+```
+SENDGRID_FROM_EMAIL   - Email address for sending reset codes (currently: scnovatec@gmail.com)
+                        Can be upgraded to custom domain email when available
+```
+
 ### Development
 
 ```env
-DATABASE_URL=postgresql://...
-SESSION_SECRET=your-secret-key
-REPL_ID=your-repl-id
-ISSUER_URL=https://replit.com/oidc
+NODE_ENV=development
 ```
 
 ## 🎯 Next Steps
@@ -281,7 +311,26 @@ ISSUER_URL=https://replit.com/oidc
 - [TanStack Query Docs](https://tanstack.com/query)
 - [shadcn/ui](https://ui.shadcn.com)
 
+## 📧 Email Configuration Notes
+
+**Current Setup:**
+- Provider: SendGrid
+- From Email: scnovatec@gmail.com (verified sender)
+- API Key: Stored in Replit Secrets as `SENDGRID_API_KEY`
+- Feature: Password reset emails with 6-digit codes
+
+**Future Upgrade:**
+- When user purchases custom domain, change `SENDGRID_FROM_EMAIL` from `scnovatec@gmail.com` to `noreply@yourdomain.com`
+- Requires SendGrid domain verification (add DKIM/SPF records)
+- No code changes needed - just update environment variable
+
 ---
 
-**Last Updated:** 2025-01-22
-**Status:** Phase 1 Complete (Frontend) | Phase 2 In Progress (Backend)
+**Last Updated:** 2025-11-23
+**Status:** Phase 1 Complete (Frontend) | Phase 2 Mostly Complete (Backend + Email) | Phase 3 Next (Cloudflare + MercadoPago)
+
+**Latest Changes:**
+- ✅ SendGrid email integration implemented (2025-11-23)
+- ✅ Password reset email flow working end-to-end
+- ✅ Foreign key constraints fixed (no CASCADE issues)
+- ✅ User deletion with proper cleanup (audit logs/domains set to NULL)
