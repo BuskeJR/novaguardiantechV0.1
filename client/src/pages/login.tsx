@@ -129,29 +129,16 @@ export default function Login() {
             </Button>
           </form>
 
-          {/* Divider */}
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">ou</span>
-            </div>
+          {/* Forgot Password Link */}
+          <div className="text-center">
+            <a
+              href="/forgot-password"
+              className="text-sm text-primary hover:underline"
+              data-testid="link-forgot-password"
+            >
+              Esqueceu sua senha?
+            </a>
           </div>
-
-          {/* Google OAuth */}
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full"
-            onClick={() => {
-              window.location.href = "/api/auth/google";
-            }}
-            disabled={loading}
-            data-testid="button-google-login"
-          >
-            Entrar com Google
-          </Button>
 
           {/* Signup Link */}
           <div className="relative">

@@ -6,6 +6,7 @@ import {
   domainRules,
   ipWhitelist,
   auditLogs,
+  passwordResetTokens,
   type User,
   type UpsertUser,
   type Tenant,
@@ -17,6 +18,7 @@ import {
   type InsertIpWhitelist,
   type AuditLog,
   type InsertAuditLog,
+  type PasswordResetToken,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -52,6 +54,12 @@ export interface IStorage {
   createAuditLog(log: InsertAuditLog): Promise<AuditLog>;
   getAuditLogs(limit?: number): Promise<AuditLog[]>;
   getAuditLogsByTenantId(tenantId: string, limit?: number): Promise<AuditLog[]>;
+
+  // Password reset methods
+  createPasswordResetToken(userId: string, resetCode: string, expiresAt: Date): Promise<PasswordResetToken>;
+  getPasswordResetToken(userId: string, resetCode: string): Promise<PasswordResetToken | undefined>;
+  markPasswordResetTokenAsUsed(tokenId: string): Promise<boolean>;
+  deleteExpiredPasswordResetTokens(userId: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -203,6 +211,48 @@ export class DatabaseStorage implements IStorage {
       .where(eq(auditLogs.tenantId, tenantId))
       .orderBy(desc(auditLogs.createdAt))
       .limit(limit);
+  }
+
+  // Password reset methods
+  async createPasswordResetToken(userId: string, resetCode: string, expiresAt: Date): Promise<PasswordResetToken> {
+    // Delete old tokens first
+    await this.deleteExpiredPasswordResetTokens(userId);
+    
+    const [token] = await db
+      .insert(passwordResetTokens)
+      .values({ userId, resetCode, expiresAt, isUsed: false })
+      .returning();
+    return token;
+  }
+
+  async getPasswordResetToken(userId: string, resetCode: string): Promise<PasswordResetToken | undefined> {
+    const [token] = await db
+      .select()
+      .from(passwordResetTokens)
+      .where(
+        and(
+          eq(passwordResetTokens.userId, userId),
+          eq(passwordResetTokens.resetCode, resetCode),
+          eq(passwordResetTokens.isUsed, false)
+        )
+      )
+      .limit(1);
+    return token;
+  }
+
+  async markPasswordResetTokenAsUsed(tokenId: string): Promise<boolean> {
+    const [token] = await db
+      .update(passwordResetTokens)
+      .set({ isUsed: true })
+      .where(eq(passwordResetTokens.id, tokenId))
+      .returning();
+    return !!token;
+  }
+
+  async deleteExpiredPasswordResetTokens(userId: string): Promise<void> {
+    await db
+      .delete(passwordResetTokens)
+      .where(eq(passwordResetTokens.userId, userId));
   }
 }
 

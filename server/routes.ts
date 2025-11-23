@@ -724,22 +724,120 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // ===== GOOGLE OAUTH ROUTES =====
+  // ===== PASSWORD RESET ROUTES =====
 
-  app.get(
-    "/api/auth/google",
-    passport.authenticate("google", {
-      scope: ["profile", "email"],
-    })
-  );
+  app.post("/api/auth/request-reset", async (req: Request, res: Response) => {
+    try {
+      const { email } = req.body;
 
-  app.get(
-    "/api/auth/google/callback",
-    passport.authenticate("google", { failureRedirect: "/login" }),
-    (req: Request, res: Response) => {
-      res.redirect("/");
+      if (!email) {
+        return res.status(400).json({ error: "Email obrigatório" });
+      }
+
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        // Don't reveal if email exists (security best practice)
+        return res.json({ success: true, message: "Se o email existe, você receberá um código de reset" });
+      }
+
+      // Generate 6-digit code
+      const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
+      const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
+      await storage.createPasswordResetToken(user.id, resetCode, expiresAt);
+
+      // TODO: Send email with reset code
+      // For now, log it (in production, use email service)
+      console.log(`Reset code for ${email}: ${resetCode}`);
+
+      res.json({ 
+        success: true, 
+        message: "Código de reset enviado para seu email",
+        // Development only: remove in production
+        ...(process.env.NODE_ENV === "development" && { devResetCode: resetCode })
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
     }
-  );
+  });
+
+  app.post("/api/auth/verify-reset-code", async (req: Request, res: Response) => {
+    try {
+      const { email, resetCode } = req.body;
+
+      if (!email || !resetCode) {
+        return res.status(400).json({ error: "Email e código obrigatórios" });
+      }
+
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        return res.status(400).json({ error: "Email não encontrado" });
+      }
+
+      const token = await storage.getPasswordResetToken(user.id, resetCode);
+      if (!token) {
+        return res.status(400).json({ error: "Código inválido ou expirado" });
+      }
+
+      // Check if expired
+      if (token.expiresAt < new Date()) {
+        return res.status(400).json({ error: "Código expirado" });
+      }
+
+      res.json({ success: true, tokenId: token.id });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/auth/reset-password", async (req: Request, res: Response) => {
+    try {
+      const { email, resetCode, newPassword } = req.body;
+
+      if (!email || !resetCode || !newPassword) {
+        return res.status(400).json({ error: "Todos os campos são obrigatórios" });
+      }
+
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        return res.status(400).json({ error: "Email não encontrado" });
+      }
+
+      const token = await storage.getPasswordResetToken(user.id, resetCode);
+      if (!token) {
+        return res.status(400).json({ error: "Código inválido" });
+      }
+
+      // Validate password
+      const passwordErrors = getPasswordErrors(newPassword);
+      if (passwordErrors.length > 0) {
+        return res.status(400).json({ error: "Senha fraca", details: passwordErrors });
+      }
+
+      // Hash new password
+      const passwordHash = await hashPassword(newPassword);
+
+      // Update password
+      await storage.updateUser(user.id, { passwordHash });
+
+      // Mark token as used
+      await storage.markPasswordResetTokenAsUsed(token.id);
+
+      // Log the action
+      await createAuditLog(
+        user.id,
+        null,
+        "password_reset",
+        "user",
+        user.id,
+        { email }
+      );
+
+      res.json({ success: true, message: "Senha alterada com sucesso" });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
 
   // ===== LOGOUT =====
   

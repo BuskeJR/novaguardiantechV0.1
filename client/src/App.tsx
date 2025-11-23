@@ -12,6 +12,7 @@ import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
 import Login from "@/pages/login";
 import Signup from "@/pages/signup";
+import ForgotPassword from "@/pages/forgot-password";
 import Pricing from "@/pages/pricing";
 import Home from "@/pages/home";
 import Domains from "@/pages/domains";
@@ -30,6 +31,7 @@ function Router() {
         <Route path="/" component={Landing} />
         <Route path="/login" component={Login} />
         <Route path="/signup" component={Signup} />
+        <Route path="/forgot-password" component={ForgotPassword} />
         <Route path="/pricing" component={Pricing} />
         <Route component={NotFound} />
       </Switch>

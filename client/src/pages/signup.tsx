@@ -221,19 +221,6 @@ export default function Signup() {
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
 
-            {/* Google OAuth Button */}
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full"
-              onClick={() => {
-                window.location.href = "/api/auth/google";
-              }}
-              data-testid="button-google-signup"
-            >
-              Cadastrar com Google
-            </Button>
-
             {/* Login Link */}
             <p className="text-xs text-center text-muted-foreground">
               Já tem conta?{" "}

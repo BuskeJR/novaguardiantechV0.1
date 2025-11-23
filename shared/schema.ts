@@ -199,3 +199,22 @@ export const dnsStatsRelations = relations(dnsStats, ({ one }) => ({
 }));
 
 export type DnsStats = typeof dnsStats.$inferSelect;
+
+// ===== PASSWORD RESET TOKENS TABLE =====
+export const passwordResetTokens = pgTable("password_reset_tokens", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  resetCode: varchar("reset_code", { length: 6 }).notNull(), // 6-digit code sent via email
+  expiresAt: timestamp("expires_at").notNull(),
+  isUsed: boolean("is_used").notNull().default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const passwordResetTokensRelations = relations(passwordResetTokens, ({ one }) => ({
+  user: one(users, {
+    fields: [passwordResetTokens.userId],
+    references: [users.id],
+  }),
+}));
+
+export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
