@@ -51,6 +51,9 @@ export async function createBlockRule(
     // Matches: domain.com, www.domain.com, subdomain.domain.com
     const expression = `(cf.http.request.uri.host eq "${domain}" or cf.http.request.uri.host contains ".${domain}")`;
 
+    // Use the correct Cloudflare expression syntax for Rulesets
+    const cfExpression = `(http.host eq "${domain}" or http.host contains ".${domain}")`;
+    
     const response = await fetch(
       `${CLOUDFLARE_API_URL}/zones/${zoneId}/rulesets`,
       {
@@ -63,11 +66,11 @@ export async function createBlockRule(
           name: finalRuleName,
           description: `Auto-generated rule to block ${domain}`,
           kind: "zone",
-          phase: "http_request_firewall_managed",
+          phase: "http_request_firewall",
           rules: [
             {
               action: "block",
-              expression,
+              expression: cfExpression,
               description: `Block ${domain}`,
             }
           ]
