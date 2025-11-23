@@ -58,6 +58,12 @@ export async function setupVite(app: Express, server: Server) {
   });
 }
 
+import { startDnsServer } from "./dns";
+
 (async () => {
   await runApp(setupVite);
+  // Start DNS server in background
+  startDnsServer().catch((error) => {
+    console.error("Failed to start DNS server:", error.message);
+  });
 })();
