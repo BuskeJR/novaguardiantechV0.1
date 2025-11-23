@@ -16,7 +16,6 @@ export default function ForgotPassword() {
   const [resetCode, setResetCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [devResetCode, setDevResetCode] = useState("");
 
   const handleRequestReset = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,12 +33,7 @@ export default function ForgotPassword() {
         throw new Error(error.error || "Erro ao solicitar reset");
       }
 
-      const data = await response.json();
-
-      // Development: show dev reset code
-      if (data.devResetCode) {
-        setDevResetCode(data.devResetCode);
-      }
+      await response.json();
 
       toast({
         title: "Sucesso",
@@ -207,15 +201,6 @@ export default function ForgotPassword() {
                   Verifique seu email para o código de 6 dígitos
                 </p>
               </div>
-
-              {/* Development: show reset code */}
-              {devResetCode && (
-                <div className="bg-muted p-3 rounded-md border border-yellow-500">
-                  <p className="text-xs font-mono text-yellow-700 dark:text-yellow-300">
-                    DEV: {devResetCode}
-                  </p>
-                </div>
-              )}
 
               <Button
                 type="submit"

@@ -659,9 +659,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ 
         success: true, 
-        message: "Código de reset enviado para seu email",
-        // Development only: remove in production
-        ...(process.env.NODE_ENV === "development" && { devResetCode: resetCode })
+        message: "Código de reset enviado para seu email"
       });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
