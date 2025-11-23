@@ -39,6 +39,7 @@ export interface IStorage {
 
   // Domain rule methods
   getDomainRulesByTenantId(tenantId: string): Promise<DomainRule[]>;
+  getAllDomainRules(): Promise<DomainRule[]>;
   getDomainRule(id: string): Promise<DomainRule | undefined>;
   createDomainRule(rule: InsertDomainRule): Promise<DomainRule>;
   updateDomainRule(id: string, data: UpdateDomainRule): Promise<DomainRule | undefined>;
@@ -136,6 +137,13 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(domainRules)
       .where(eq(domainRules.tenantId, tenantId))
+      .orderBy(desc(domainRules.createdAt));
+  }
+
+  async getAllDomainRules(): Promise<DomainRule[]> {
+    return await db
+      .select()
+      .from(domainRules)
       .orderBy(desc(domainRules.createdAt));
   }
 
