@@ -571,6 +571,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   );
 
+  // ===== LOGOUT =====
+  
+  app.post("/api/logout", (req: Request, res: Response) => {
+    req.logout((err) => {
+      if (err) {
+        return res.status(500).json({ error: "Erro ao sair" });
+      }
+      res.json({ success: true });
+    });
+  });
+
+  app.get("/api/logout", (req: Request, res: Response) => {
+    req.logout((err) => {
+      if (err) {
+        return res.redirect("/login");
+      }
+      res.redirect("/login");
+    });
+  });
+
+  // ===== TENANT SETTINGS (USER) =====
+  
+  app.patch("/api/tenant/me", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const user = req.user as User;
+      const { publicIp } = req.body;
+
+      const tenant = await getUserTenant(user.id);
+      
+      const updated = await storage.updateTenant(tenant.id, {
+        publicIp: publicIp || null,
+      });
+
+      await createAuditLog(
+        user.id,
+        tenant.id,
+        "tenant_updated",
+        "tenant",
+        tenant.id,
+        { publicIp }
+      );
+
+      res.json(updated);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // ===== STRIPE WEBHOOK =====
 
   // Stripe webhook

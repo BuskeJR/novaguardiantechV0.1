@@ -32,12 +32,13 @@ import {
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, Trash2 } from "lucide-react";
-import type { IpWhitelist, InsertIpWhitelist } from "@shared/schema";
+import type { IpWhitelist, InsertIpWhitelist, Tenant } from "@shared/schema";
 
 export default function Whitelist() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [publicIp, setPublicIp] = useState("");
   const [newIp, setNewIp] = useState<Partial<InsertIpWhitelist>>({
     ipAddress: "",
     label: "",
@@ -56,9 +57,35 @@ export default function Whitelist() {
     }
   }, [isAuthenticated, authLoading, toast]);
 
+  const { data: tenant, isLoading: tenantLoading } = useQuery<Tenant>({
+    queryKey: ["/api/tenant/me"],
+    enabled: isAuthenticated,
+  });
+
   const { data: whitelist = [], isLoading } = useQuery<IpWhitelist[]>({
     queryKey: ["/api/whitelist"],
     enabled: isAuthenticated,
+  });
+
+  const publicIpMutation = useMutation({
+    mutationFn: async (ip: string) => {
+      await apiRequest("PATCH", "/api/tenant/me", { publicIp: ip || null });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/tenant/me"] });
+      toast({
+        title: "Sucesso",
+        description: "IP Público atualizado com sucesso",
+      });
+      setPublicIp("");
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erro",
+        description: error.message || "Falha ao atualizar IP",
+        variant: "destructive",
+      });
+    },
   });
 
   const addMutation = useMutation({
@@ -133,9 +160,64 @@ export default function Whitelist() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold" data-testid="text-page-title">Lista Branca de IPs</h1>
+          <h1 className="text-3xl font-bold" data-testid="text-page-title">Configuração de Rede</h1>
           <p className="text-muted-foreground mt-1">
-            Gerencie os endereços IP autorizados para acesso ao DNS
+            Gerencie seu IP Público e lista branca de endereços
+          </p>
+        </div>
+      </div>
+
+      {/* IP Público Configuration */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Seu IP Público</CardTitle>
+          <CardDescription>
+            Configure o endereço IP público da sua rede para a proteção de DNS
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex gap-2">
+            <Input
+              placeholder="Ex: 203.0.113.42"
+              value={publicIp || tenant?.publicIp || ""}
+              onChange={(e) => setPublicIp(e.target.value)}
+              data-testid="input-public-ip"
+            />
+            <Button
+              onClick={() => publicIpMutation.mutate(publicIp)}
+              disabled={publicIpMutation.isPending}
+              data-testid="button-save-public-ip"
+            >
+              {publicIpMutation.isPending ? "Salvando..." : "Salvar"}
+            </Button>
+            {(publicIp || tenant?.publicIp) && (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setPublicIp("");
+                  publicIpMutation.mutate("");
+                }}
+                disabled={publicIpMutation.isPending}
+                data-testid="button-clear-public-ip"
+              >
+                Limpar
+              </Button>
+            )}
+          </div>
+          {(publicIp || tenant?.publicIp) && (
+            <p className="text-sm text-muted-foreground mt-2">
+              IP Configurado: <span className="font-mono font-semibold">{publicIp || tenant?.publicIp}</span>
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Whitelist */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold">Lista Branca de IPs</h2>
+          <p className="text-muted-foreground mt-1">
+            IPs autorizados para acesso ao DNS
           </p>
         </div>
         <Button onClick={() => setIsAddDialogOpen(true)} data-testid="button-add-ip">
