@@ -40,6 +40,8 @@ export async function createBlockRule(
 ): Promise<{ success: boolean; ruleId?: string; error?: string }> {
   try {
     const token = getApiToken();
+    console.log(`[Cloudflare] Creating block rule for ${domain}`);
+    console.log(`[Cloudflare] Token length: ${token?.length || 0}, Zone: ${zoneId}`);
 
     // Sanitize domain name for rule name (max 255 chars)
     const safeDomain = domain.replace(/[^a-zA-Z0-9.-]/g, "");
@@ -71,18 +73,26 @@ export async function createBlockRule(
 
     if (!response.ok || !data.success) {
       const error = data.errors?.[0] || { message: "Unknown error" };
+      console.error(`[Cloudflare] Error creating rule for ${domain}:`, {
+        status: response.status,
+        errorMessage: error.message,
+        fullError: data.errors,
+        token: token ? `${token.substring(0, 10)}...` : 'MISSING'
+      });
       return {
         success: false,
         error: `Cloudflare: ${error.message}`,
       };
     }
 
+    console.log(`[Cloudflare] Successfully created rule for ${domain}, Rule ID: ${data.result?.id}`);
     return {
       success: true,
       ruleId: data.result?.id,
     };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
+    console.error(`[Cloudflare] Exception creating rule for ${domain}:`, message);
     return {
       success: false,
       error: `Failed to create rule: ${message}`,
