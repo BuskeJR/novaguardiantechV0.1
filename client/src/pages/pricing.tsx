@@ -150,8 +150,16 @@ export default function Pricing() {
 
   const checkoutMutation = useMutation({
     mutationFn: async (plan: string) => {
-      const response = await apiRequest("POST", "/api/checkout", { plan });
-      return response;
+      // Try MercadoPago first, fallback to Stripe
+      try {
+        const response = await apiRequest("POST", "/api/checkout-mercadopago", { plan });
+        return response;
+      } catch (error) {
+        // Fallback to Stripe
+        console.log("MercadoPago checkout failed, trying Stripe fallback");
+        const response = await apiRequest("POST", "/api/checkout", { plan });
+        return response;
+      }
     },
     onSuccess: (data) => {
       if (data.url) {
@@ -170,6 +178,7 @@ export default function Pricing() {
         description: error.message || "Erro ao processar checkout",
         variant: "destructive",
       });
+      setLoading(false);
     },
   });
 
@@ -392,11 +401,20 @@ export default function Pricing() {
                       }`}
                       variant={isPopular ? "default" : "outline"}
                       onClick={() => handleSelectPlan(plan.key)}
-                      disabled={loading}
+                      disabled={loading || checkoutMutation.isPending}
                       data-testid={`button-select-${plan.key}`}
                     >
-                      {isAuthenticated ? "Selecionar" : "Começar"}
-                      <ArrowRight className="ml-2 h-4 w-4" />
+                      {checkoutMutation.isPending ? (
+                        <>
+                          <span className="animate-spin mr-2">⏳</span>
+                          Processando...
+                        </>
+                      ) : (
+                        <>
+                          {isAuthenticated ? "Selecionar" : "Começar"}
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                        </>
+                      )}
                     </Button>
                   </CardContent>
                 </Card>

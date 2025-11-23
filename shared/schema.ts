@@ -57,6 +57,7 @@ export const tenants = pgTable("tenants", {
   publicIp: varchar("public_ip", { length: 45 }), // IPv4 or IPv6
   dnsConfigPath: text("dns_config_path"), // Path to DNS config file for this tenant
   stripeCustomerId: varchar("stripe_customer_id"),
+  mercadopagoCustomerId: varchar("mercadopago_customer_id"),
   subscriptionStatus: varchar("subscription_status", { length: 50 }).default("trial"), // trial, active, canceled
   currentPlan: varchar("current_plan", { length: 50 }).default("free"), // free, residencial, plus, pro
   maxDevices: integer("max_devices").default(0), // Limita quantidade de dispositivos por plano
