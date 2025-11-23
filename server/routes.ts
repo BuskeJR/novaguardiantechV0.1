@@ -912,6 +912,82 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Block check endpoint - Verificar se domínio deve ser bloqueado para um IP
+  // Usage: GET /api/block-check?domain=tiktok.com
+  app.get("/api/block-check", async (req: Request, res: Response) => {
+    try {
+      const { domain } = req.query;
+      
+      if (!domain || typeof domain !== "string") {
+        return res.status(400).json({ error: "Domínio é obrigatório", blocked: false });
+      }
+
+      // Pega o IP do cliente
+      const clientIp = (req.headers["x-forwarded-for"] as string)?.split(",")[0].trim() || 
+                       req.socket.remoteAddress || 
+                       "unknown";
+
+      // Busca todos os tenants e suas whitelist + domains
+      const tenants = await storage.getAllTenants();
+      const normalizedDomain = domain.toLowerCase();
+
+      for (const tenant of tenants) {
+        if (!tenant.isActive) continue;
+
+        // Verifica se o IP está na whitelist
+        const whitelistIps = await storage.getIpWhitelistByTenantId(tenant.id);
+        const ipWhitelisted = whitelistIps.some(w => w.ipAddress === clientIp);
+
+        if (ipWhitelisted) {
+          // Se IP está na whitelist, verifica se domínio está bloqueado
+          const rules = await storage.getDomainRulesByTenantId(tenant.id);
+          
+          const isBlocked = rules.some(rule => {
+            if (rule.status !== "active") return false;
+            
+            const ruleDomain = rule.domain.toLowerCase();
+            if (ruleDomain === normalizedDomain) return true;
+            
+            // Wildcard: se tiktok.com bloqueado, www.tiktok.com também é
+            if (normalizedDomain.endsWith(ruleDomain) && 
+                normalizedDomain.split(".").length > ruleDomain.split(".").length) {
+              return true;
+            }
+            
+            return false;
+          });
+
+          if (isBlocked) {
+            return res.json({
+              success: true,
+              domain: normalizedDomain,
+              blocked: true,
+              ip: clientIp,
+              message: `Domínio ${domain} está bloqueado para este IP`,
+              response: "127.0.0.1"
+            });
+          }
+        }
+      }
+
+      // Se não encontrou bloqueio, retorna não bloqueado
+      res.json({
+        success: true,
+        domain: normalizedDomain,
+        blocked: false,
+        ip: clientIp,
+        message: `Domínio ${domain} não está bloqueado`,
+        response: null
+      });
+    } catch (error: any) {
+      res.status(500).json({ 
+        success: false,
+        error: error.message,
+        blocked: false 
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
