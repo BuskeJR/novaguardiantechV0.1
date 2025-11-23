@@ -7,7 +7,7 @@ export default function Landing() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center justify-between px-6">
+        <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6 max-w-7xl">
           <div className="flex items-center gap-3">
             <Shield className="h-7 w-7 text-primary" data-testid="logo-icon" />
             <span className="text-xl font-bold" data-testid="text-brand-name">NovaGuardian</span>
@@ -31,48 +31,50 @@ export default function Landing() {
       </header>
 
       {/* Hero Section */}
-      <section className="container px-6 py-24 md:py-32">
-        <div className="mx-auto max-w-4xl text-center">
-          <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary mb-8">
-            <Shield className="h-4 w-4" />
-            Proteção Empresarial de DNS
-          </div>
-          <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight mb-6">
-            Proteja Sua Rede com
-            <span className="text-primary"> Bloqueio de DNS</span>
-          </h1>
-          <p className="text-xl text-muted-foreground leading-relaxed mb-10 max-w-2xl mx-auto">
-            Solução multi-tenant de filtragem DNS. Bloqueie domínios maliciosos, anúncios e conteúdo indesejado em toda sua rede com um único clique.
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button 
-              size="lg" 
-              className="text-lg px-8 py-6"
-              onClick={() => window.location.href = "/login"}
-              data-testid="button-get-started"
-            >
-              Começar Gratuitamente
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
-            <Button 
-              size="lg" 
-              variant="outline" 
-              className="text-lg px-8 py-6"
-              onClick={() => window.location.href = "/pricing"}
-              data-testid="button-learn-more"
-            >
-              Ver Planos
-            </Button>
+      <section className="w-full py-24 md:py-40 lg:py-48">
+        <div className="container mx-auto px-4 md:px-6 max-w-6xl">
+          <div className="text-center">
+            <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary mb-8">
+              <Shield className="h-4 w-4" />
+              Proteção Empresarial de DNS
+            </div>
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight mb-8 text-slate-900 dark:text-white">
+              Proteja Sua Rede com
+              <span className="text-primary"> Bloqueio de DNS</span>
+            </h1>
+            <p className="text-lg md:text-xl text-muted-foreground leading-relaxed mb-12 max-w-3xl mx-auto">
+              Solução multi-tenant de filtragem DNS. Bloqueie domínios maliciosos, anúncios e conteúdo indesejado em toda sua rede com um único clique.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Button 
+                size="lg" 
+                className="text-lg px-10 py-7 whitespace-nowrap"
+                onClick={() => window.location.href = "/login"}
+                data-testid="button-get-started"
+              >
+                Começar Gratuitamente
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+              <Button 
+                size="lg" 
+                variant="outline" 
+                className="text-lg px-10 py-7 whitespace-nowrap"
+                onClick={() => window.location.href = "/pricing"}
+                data-testid="button-learn-more"
+              >
+                Ver Planos
+              </Button>
+            </div>
           </div>
         </div>
       </section>
 
       {/* How It Works */}
-      <section className="container px-6 py-24 bg-muted/30">
-        <div className="mx-auto max-w-6xl">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Como Funciona</h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+      <section className="w-full py-24 md:py-32 bg-muted/30">
+        <div className="container mx-auto px-4 md:px-6 max-w-6xl">
+          <div className="text-center mb-20">
+            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-slate-900 dark:text-white">Como Funciona</h2>
+            <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
               Três passos simples para proteger sua rede inteira
             </p>
           </div>
@@ -88,7 +90,7 @@ export default function Landing() {
               {
                 step: "2",
                 title: "Adicionar Domínios",
-                description: "Adicione domínios que deseja bloquear através do nosso painel intuitivo",
+                description: "Adicione os domínios que deseja bloquear através do nosso painel intuitivo",
                 icon: Lock,
               },
               {
@@ -98,18 +100,18 @@ export default function Landing() {
                 icon: Zap,
               },
             ].map((item) => (
-              <Card key={item.step} className="relative overflow-hidden">
-                <div className="absolute top-4 right-4 text-6xl font-bold text-primary/10">
+              <Card key={item.step} className="relative overflow-hidden hover-elevate">
+                <div className="absolute top-6 right-6 text-6xl font-bold text-primary/10">
                   {item.step}
                 </div>
-                <CardHeader>
-                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                    <item.icon className="h-6 w-6 text-primary" />
+                <CardHeader className="pb-4">
+                  <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10">
+                    <item.icon className="h-7 w-7 text-primary" />
                   </div>
-                  <CardTitle className="text-xl">{item.title}</CardTitle>
+                  <CardTitle className="text-2xl">{item.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground">{item.description}</p>
+                  <p className="text-base text-muted-foreground">{item.description}</p>
                 </CardContent>
               </Card>
             ))}
@@ -118,11 +120,11 @@ export default function Landing() {
       </section>
 
       {/* Features */}
-      <section className="container px-6 py-24">
-        <div className="mx-auto max-w-6xl">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Recursos Poderosos</h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+      <section className="w-full py-24 md:py-32">
+        <div className="container mx-auto px-4 md:px-6 max-w-6xl">
+          <div className="text-center mb-20">
+            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-slate-900 dark:text-white">Recursos Poderosos</h2>
+            <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
               Tudo que você precisa para gerenciar bloqueio de DNS em escala
             </p>
           </div>
@@ -161,14 +163,14 @@ export default function Landing() {
               },
             ].map((feature, index) => (
               <Card key={index} className="hover-elevate">
-                <CardHeader>
-                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                    <feature.icon className="h-6 w-6 text-primary" />
+                <CardHeader className="pb-4">
+                  <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10">
+                    <feature.icon className="h-7 w-7 text-primary" />
                   </div>
-                  <CardTitle className="text-xl">{feature.title}</CardTitle>
+                  <CardTitle className="text-2xl">{feature.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground">{feature.description}</p>
+                  <p className="text-base text-muted-foreground">{feature.description}</p>
                 </CardContent>
               </Card>
             ))}
@@ -177,17 +179,17 @@ export default function Landing() {
       </section>
 
       {/* CTA Section */}
-      <section className="container px-6 py-24 bg-primary/5">
-        <div className="mx-auto max-w-3xl text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-6">
+      <section className="w-full py-24 md:py-32 bg-gradient-to-br from-blue-50 via-white to-blue-50 dark:from-slate-900/50 dark:via-background dark:to-slate-900/50">
+        <div className="container mx-auto px-4 md:px-6 max-w-4xl text-center">
+          <h2 className="text-4xl md:text-5xl font-bold mb-8 text-slate-900 dark:text-white">
             Pronto para Proteger Sua Rede?
           </h2>
-          <p className="text-lg text-muted-foreground mb-10">
+          <p className="text-lg md:text-xl text-muted-foreground mb-12 max-w-3xl mx-auto">
             Junte-se a empresas que protegem suas redes com NovaGuardian DNS
           </p>
           <Button 
             size="lg" 
-            className="text-lg px-8 py-6"
+            className="text-lg px-12 py-7 whitespace-nowrap"
             onClick={() => window.location.href = "/login"}
             data-testid="button-cta-start"
           >
@@ -198,15 +200,17 @@ export default function Landing() {
       </section>
 
       {/* Footer */}
-      <footer className="container px-6 py-12 border-t">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <Shield className="h-6 w-6 text-primary" />
-            <span className="font-semibold">NovaGuardian</span>
+      <footer className="w-full py-12 md:py-16 border-t bg-muted/30">
+        <div className="container mx-auto px-4 md:px-6 max-w-6xl">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-3">
+              <Shield className="h-6 w-6 text-primary" />
+              <span className="font-semibold">NovaGuardian</span>
+            </div>
+            <p className="text-sm text-muted-foreground text-center">
+              © 2025 NovaGuardianTech. Proteção de DNS Empresarial.
+            </p>
           </div>
-          <p className="text-sm text-muted-foreground">
-            © 2025 NovaGuardianTech. Proteção de DNS Empresarial.
-          </p>
         </div>
       </footer>
     </div>

@@ -119,24 +119,24 @@ export default function Pricing() {
   return (
     <div className="min-h-screen bg-white dark:bg-slate-950">
       {/* Hero Section */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 py-20 md:py-32">
+      <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 py-24 md:py-40">
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl"></div>
           <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl"></div>
         </div>
 
-        <div className="relative container mx-auto max-w-5xl px-4 text-center">
-          <div className="flex justify-center mb-6">
+        <div className="relative container mx-auto max-w-6xl px-4 text-center">
+          <div className="flex justify-center mb-8">
             <div className="rounded-2xl bg-white/10 backdrop-blur-xl p-4 border border-white/20">
               <Shield className="h-10 w-10 text-blue-400" />
             </div>
           </div>
 
-          <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 tracking-tight">
+          <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-8 tracking-tight leading-tight">
             Planos de Proteção DNS
           </h1>
 
-          <p className="text-xl md:text-2xl text-slate-300 mb-8 max-w-2xl mx-auto">
+          <p className="text-xl md:text-2xl text-slate-300 mb-12 max-w-3xl mx-auto leading-relaxed">
             Escolha o plano perfeito para proteger sua rede contra ameaças
           </p>
 
@@ -168,8 +168,8 @@ export default function Pricing() {
       </div>
 
       {/* Pricing Cards */}
-      <div className="container mx-auto max-w-7xl px-4 py-24">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+      <div className="container mx-auto max-w-7xl px-4 py-32">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {planList.map((plan, index) => {
             const isPopular = plan.popular;
             const displayPrice = calculatePrice(plan);
@@ -332,13 +332,13 @@ export default function Pricing() {
       </div>
 
       {/* Features Comparison */}
-      <div className="bg-slate-50 dark:bg-slate-900/50 py-24">
+      <div className="bg-slate-50 dark:bg-slate-900/50 py-32">
         <div className="container mx-auto max-w-6xl px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-slate-900 dark:text-white mb-4">
+          <div className="text-center mb-20">
+            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white mb-6">
               Comparação Completa
             </h2>
-            <p className="text-lg text-slate-600 dark:text-slate-400">
+            <p className="text-lg md:text-xl text-slate-600 dark:text-slate-400 max-w-3xl mx-auto">
               Veja exatamente o que você ganha em cada plano
             </p>
           </div>
@@ -392,14 +392,14 @@ export default function Pricing() {
       </div>
 
       {/* FAQ Section */}
-      <div className="container mx-auto max-w-3xl px-4 py-24">
-        <div className="text-center mb-16">
-          <div className="flex justify-center mb-4">
-            <div className="rounded-xl bg-blue-50 dark:bg-blue-900/20 p-3 border border-blue-200 dark:border-blue-800">
-              <HelpCircle className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+      <div className="container mx-auto max-w-3xl px-4 py-32">
+        <div className="text-center mb-20">
+          <div className="flex justify-center mb-6">
+            <div className="rounded-xl bg-blue-50 dark:bg-blue-900/20 p-4 border border-blue-200 dark:border-blue-800">
+              <HelpCircle className="h-8 w-8 text-blue-600 dark:text-blue-400" />
             </div>
           </div>
-          <h2 className="text-4xl font-bold text-slate-900 dark:text-white mb-4">
+          <h2 className="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white mb-6">
             Perguntas Frequentes
           </h2>
         </div>
