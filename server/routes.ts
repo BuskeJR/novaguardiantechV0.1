@@ -912,7 +912,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // DNS Test endpoint - Verifica se um domínio está bloqueado
+  // DNS Test endpoint - PUBLIC - Testa se domínios estão bloqueados
+  app.get("/api/dns/test-public", async (req: Request, res: Response) => {
+    try {
+      const { domain } = req.query;
+
+      // Busca TODOS os domínios bloqueados de TODOS os tenants
+      const tenants = await storage.getAllTenants();
+      let allBlockedDomains: string[] = [];
+
+      for (const tenant of tenants) {
+        if (tenant.isActive) {
+          const rules = await storage.getDomainRulesByTenantId(tenant.id);
+          allBlockedDomains = allBlockedDomains.concat(
+            rules
+              .filter(r => r.status === "active")
+              .map(r => r.domain.toLowerCase())
+          );
+        }
+      }
+
+      // Se não mandou domínio, retorna lista de TODOS os bloqueados
+      if (!domain) {
+        return res.json({
+          success: true,
+          totalBlocked: allBlockedDomains.length,
+          blockedDomains: allBlockedDomains,
+          message: `Total de ${allBlockedDomains.length} domínios bloqueados no sistema`,
+        });
+      }
+
+      // Testa um domínio específico
+      const normalizedDomain = (domain as string).toLowerCase();
+      const isBlocked = allBlockedDomains.some(blocked => {
+        if (blocked === normalizedDomain) return true;
+        // Wildcard: se tiktok.com está bloqueado, www.tiktok.com também é
+        if (normalizedDomain.endsWith(blocked) && normalizedDomain.split(".").length > blocked.split(".").length) {
+          return true;
+        }
+        return false;
+      });
+
+      res.json({
+        success: true,
+        domain: normalizedDomain,
+        blocked: isBlocked,
+        totalBlockedInSystem: allBlockedDomains.length,
+        message: isBlocked 
+          ? `✅ BLOQUEADO: ${domain} está na lista de bloqueio`
+          : `❌ NÃO BLOQUEADO: ${domain} pode ser acessado`,
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // DNS Test endpoint - Com autenticação para tenant específico
   app.get("/api/dns/test", requireAuth, async (req: Request, res: Response) => {
     try {
       const { domain } = req.query;
@@ -947,6 +1002,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         success: true,
         domain: normalizedDomain,
         blocked: isBlocked,
+        totalBlockedInTenant: rules.length,
         message: isBlocked 
           ? `✅ Domínio ${domain} ESTÁ BLOQUEADO pelo NovaGuardian`
           : `❌ Domínio ${domain} NÃO está bloqueado (será resolvido normalmente)`,
