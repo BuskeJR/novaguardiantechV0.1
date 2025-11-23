@@ -10,8 +10,13 @@ export default function Login() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  
+  // Get email from URL params if coming from signup
+  const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+  const emailFromSignup = searchParams?.get('email') || '';
+  
   const [credentials, setCredentials] = useState({
-    email: "",
+    email: emailFromSignup,
     password: "",
   });
 
@@ -31,15 +36,17 @@ export default function Login() {
         throw new Error(error.error || "Erro ao fazer login");
       }
 
+      const data = await response.json();
+
       toast({
         title: "Bem-vindo!",
-        description: "Entrando na sua conta...",
+        description: `Entrando com ${data.email}...`,
       });
 
-      // Redirect to dashboard
+      // Wait a moment then redirect to dashboard
       setTimeout(() => {
         window.location.href = "/";
-      }, 1000);
+      }, 500);
     } catch (error: any) {
       toast({
         title: "Erro",

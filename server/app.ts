@@ -106,8 +106,8 @@ app.use((req, res, next) => {
 export default async function runApp(
   setup: (app: Express, server: Server) => Promise<void>,
 ) {
-  // Setup Replit Auth
-  await setupReplit(app);
+  // Note: Replit Auth disabled - using custom password + Google OAuth
+  // await setupReplit(app);
   
   const server = await registerRoutes(app);
 

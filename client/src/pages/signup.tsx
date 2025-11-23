@@ -74,13 +74,13 @@ export default function Signup() {
       
       toast({
         title: "Conta criada com sucesso!",
-        description: "Entrando na sua conta...",
+        description: "Redirecionando para login...",
       });
 
       // Redirect to login
       setTimeout(() => {
-        window.location.href = `/api/auth/login-password?email=${encodeURIComponent(formData.email)}&password=${encodeURIComponent(formData.password)}`;
-      }, 1500);
+        window.location.href = `/login?email=${encodeURIComponent(formData.email)}`;
+      }, 500);
     } catch (error: any) {
       toast({
         title: "Erro",
