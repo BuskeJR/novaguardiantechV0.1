@@ -142,18 +142,18 @@ export default function Pricing() {
       // Try MercadoPago first, fallback to Stripe
       try {
         const response = await apiRequest("POST", "/api/checkout-mercadopago", { plan });
-        return response;
+        return response as any;
       } catch (error) {
         // Fallback to Stripe
         console.log("MercadoPago checkout failed, trying Stripe fallback");
         const response = await apiRequest("POST", "/api/checkout", { plan });
-        return response;
+        return response as any;
       }
     },
-    onSuccess: (data) => {
-      if (data.url) {
+    onSuccess: (data: any) => {
+      if (data?.url) {
         window.location.href = data.url;
-      } else if (data.success) {
+      } else if (data?.success) {
         toast({
           title: "Sucesso!",
           description: "Você está usando o plano gratuito",
