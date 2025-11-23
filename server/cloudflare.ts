@@ -52,7 +52,7 @@ export async function createBlockRule(
     const expression = `(cf.http.request.uri.host eq "${domain}" or cf.http.request.uri.host contains ".${domain}")`;
 
     const response = await fetch(
-      `${CLOUDFLARE_API_URL}/zones/${zoneId}/firewall/rules`,
+      `${CLOUDFLARE_API_URL}/zones/${zoneId}/rulesets`,
       {
         method: "POST",
         headers: {
@@ -62,9 +62,15 @@ export async function createBlockRule(
         body: JSON.stringify({
           name: finalRuleName,
           description: `Auto-generated rule to block ${domain}`,
-          expression,
-          action: "block",
-          priority: 1,
+          kind: "zone",
+          phase: "http_request_firewall_managed",
+          rules: [
+            {
+              action: "block",
+              expression,
+              description: `Block ${domain}`,
+            }
+          ]
         }),
       }
     );
@@ -103,7 +109,7 @@ export async function createBlockRule(
 /**
  * Deletes a firewall rule from Cloudflare
  * @param zoneId - Cloudflare Zone ID
- * @param ruleId - Rule ID to delete
+ * @param ruleId - Rule ID to delete (actually ruleset ID)
  * @returns Success status or error
  */
 export async function deleteBlockRule(
@@ -114,7 +120,7 @@ export async function deleteBlockRule(
     const token = getApiToken();
 
     const response = await fetch(
-      `${CLOUDFLARE_API_URL}/zones/${zoneId}/firewall/rules/${ruleId}`,
+      `${CLOUDFLARE_API_URL}/zones/${zoneId}/rulesets/${ruleId}`,
       {
         method: "DELETE",
         headers: {
