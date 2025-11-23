@@ -14,6 +14,7 @@ import { registerRoutes } from "./routes";
 import setupReplit from "./replitAuth";
 import passport from "passport";
 import { setupGoogleOAuth } from "./google-oauth";
+import { checkDomainBlocked, extractDomainFromUrl, getClientIpFromRequest } from "./proxy";
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
@@ -94,6 +95,40 @@ passport.deserializeUser(async (id: string, done) => {
 
 // Setup Google OAuth
 setupGoogleOAuth();
+
+// PROXY BLOCKER MIDDLEWARE - Intercepta requisições HTTP e bloqueia domínios
+// Executado ANTES de qualquer rota normal
+app.use(async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    // Pula requisições que não são pra domínios (API, etc)
+    if (req.path.startsWith("/api") || req.path.startsWith("/__")) {
+      return next();
+    }
+
+    const clientIp = getClientIpFromRequest(req);
+    const hostHeader = req.headers.host || "";
+    const domain = hostHeader.split(":")[0]; // Remove porta se houver
+
+    // Verifica se este domínio deve ser bloqueado para este IP
+    const isBlocked = await checkDomainBlocked(domain, clientIp);
+
+    if (isBlocked) {
+      log(`BLOCKED: ${domain} from IP ${clientIp}`, "proxy");
+      return res.status(403).json({
+        error: "Acesso bloqueado",
+        message: `Este domínio (${domain}) está bloqueado para sua rede.`,
+        domain,
+        ip: clientIp,
+      });
+    }
+
+    next();
+  } catch (error) {
+    // Se houver erro, deixa passar (não quer derrubar o servidor)
+    log(`Proxy middleware error: ${error}`, "proxy");
+    next();
+  }
+});
 
 app.use((req, res, next) => {
   const start = Date.now();

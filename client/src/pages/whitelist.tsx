@@ -308,7 +308,7 @@ export default function Whitelist() {
               <Input
                 id="label"
                 placeholder="Rede do Escritório"
-                value={newIp.label}
+                value={newIp.label || ""}
                 onChange={(e) => setNewIp({ ...newIp, label: e.target.value })}
                 data-testid="input-label"
               />
