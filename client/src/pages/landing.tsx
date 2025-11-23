@@ -189,7 +189,7 @@ export default function Landing() {
           </p>
           <Button 
             size="lg" 
-            className="text-lg px-12 py-7 whitespace-nowrap"
+            className="text-base px-12 py-7 whitespace-nowrap h-auto"
             onClick={() => window.location.href = "/login"}
             data-testid="button-cta-start"
           >
