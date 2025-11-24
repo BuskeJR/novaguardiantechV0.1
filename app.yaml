@@ -1,0 +1,32 @@
+name: novaguardian-tech
+services:
+  - name: api-web
+    github:
+      branch: main
+      repo: BuskeJR/Projeto_NovaTech
+    build_command: npm run build
+    run_command: npm start
+    http_port: 5000
+    envs:
+      - key: NODE_ENV
+        value: production
+        scope: RUN_TIME
+      - key: DATABASE_URL
+        value: ${db.connection_string}
+        scope: RUN_TIME
+      - key: SESSION_SECRET
+        scope: RUN_TIME
+        value: ""
+      - key: SENDGRID_API_KEY
+        scope: RUN_TIME
+        value: ""
+      - key: SENDGRID_FROM_EMAIL
+        value: noreply@${APP_DOMAIN}
+        scope: RUN_TIME
+    health_check:
+      http_path: /api/health
+databases:
+  - name: novaguardian-db
+    engine: PG
+    version: "15"
+    production: true

@@ -1,0 +1,25 @@
+name: Deploy to DigitalOcean
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build and push to DigitalOcean Registry
+        run: |
+          echo ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }} | docker login -u ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }} --password-stdin registry.digitalocean.com
+          docker build -t registry.digitalocean.com/${{ secrets.DIGITALOCEAN_REGISTRY_NAME }}/novaguardian:${{ github.sha }} .
+          docker push registry.digitalocean.com/${{ secrets.DIGITALOCEAN_REGISTRY_NAME }}/novaguardian:${{ github.sha }}
+
+      - name: Deploy to DigitalOcean App Platform
+        uses: digitalocean/app_action@main
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+          app_spec: app.yaml

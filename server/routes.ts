@@ -105,6 +105,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     )
   );
 
+  // ===== HEALTH CHECK =====
+  app.get("/api/health", async (req: Request, res: Response) => {
+    try {
+      // Simple health check - app is responding
+      res.json({
+        status: "ok",
+        timestamp: new Date().toISOString(),
+        environment: process.env.NODE_ENV || "unknown",
+      });
+    } catch (error) {
+      res.status(500).json({
+        status: "error",
+        error: "Health check failed",
+      });
+    }
+  });
+
   // ===== AUTH ROUTES =====
   
   app.get("/api/auth/user", requireAuth, async (req: Request, res: Response) => {
