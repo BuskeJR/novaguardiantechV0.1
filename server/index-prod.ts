@@ -4,6 +4,8 @@ import { type Server } from "node:http";
 
 import express, { type Express } from "express";
 import runApp from "./app";
+import { createProxyServer } from "./http-proxy";
+import { log } from "./app";
 
 export async function serveStatic(app: Express, _server: Server) {
   const distPath = path.resolve(import.meta.dirname, "public");
@@ -24,4 +26,10 @@ export async function serveStatic(app: Express, _server: Server) {
 
 (async () => {
   await runApp(serveStatic);
+
+  // Start HTTP Proxy Server on port 3128 for domain blocking
+  const proxyServer = createProxyServer();
+  proxyServer.listen(3128, "0.0.0.0", () => {
+    log("HTTP Proxy Server running on port 3128", "proxy");
+  });
 })();

@@ -16,6 +16,7 @@ import ForgotPassword from "@/pages/forgot-password";
 import Home from "@/pages/home";
 import Domains from "@/pages/domains";
 import Whitelist from "@/pages/whitelist";
+import ProxySetup from "@/pages/proxy-setup";
 import CloudflareSetup from "@/pages/cloudflare-setup";
 import AdminClients from "@/pages/admin-clients";
 import AdminUsers from "@/pages/admin-users";
@@ -24,7 +25,6 @@ import AdminAudit from "@/pages/admin-audit";
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
 
-  // Show landing page while loading or not authenticated
   if (isLoading || !isAuthenticated) {
     return (
       <Switch>
@@ -37,7 +37,6 @@ function Router() {
     );
   }
 
-  // Authenticated users get the dashboard with sidebar
   return (
     <SidebarProvider>
       <div className="flex h-screen w-full overflow-hidden">
@@ -53,6 +52,7 @@ function Router() {
               <Route path="/" component={Home} />
               <Route path="/domains" component={Domains} />
               <Route path="/whitelist" component={Whitelist} />
+              <Route path="/proxy-setup" component={ProxySetup} />
               <Route path="/cloudflare-setup" component={CloudflareSetup} />
               <Route path="/admin/clients" component={AdminClients} />
               <Route path="/admin/users" component={AdminUsers} />

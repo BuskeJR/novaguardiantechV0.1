@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { type Server } from "node:http";
+import http from "node:http";
 
 import { nanoid } from "nanoid";
 import { type Express } from "express";
@@ -8,6 +9,8 @@ import { createServer as createViteServer, createLogger } from "vite";
 
 import viteConfig from "../vite.config";
 import runApp from "./app";
+import { createProxyServer } from "./http-proxy";
+import { log } from "./app";
 
 export async function setupVite(app: Express, server: Server) {
   const viteLogger = createLogger();
@@ -60,4 +63,10 @@ export async function setupVite(app: Express, server: Server) {
 
 (async () => {
   await runApp(setupVite);
+
+  // Start HTTP Proxy Server on port 3128 for domain blocking
+  const proxyServer = createProxyServer();
+  proxyServer.listen(3128, "0.0.0.0", () => {
+    log("HTTP Proxy Server running on port 3128", "proxy");
+  });
 })();
