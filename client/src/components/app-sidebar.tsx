@@ -40,11 +40,6 @@ const userMenuItems = [
     url: "/whitelist",
     icon: Network,
   },
-  {
-    title: "Configurar Cloudflare",
-    url: "/cloudflare-setup",
-    icon: Cloud,
-  },
 ];
 
 const adminMenuItems = [

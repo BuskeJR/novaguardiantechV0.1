@@ -55,8 +55,6 @@ export const tenants = pgTable("tenants", {
   ownerId: varchar("owner_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   isActive: boolean("is_active").notNull().default(true),
   publicIp: varchar("public_ip", { length: 45 }), // IPv4 or IPv6
-  dnsConfigPath: text("dns_config_path"), // Path to DNS config file for this tenant
-  cloudflareZoneId: varchar("cloudflare_zone_id"), // Cloudflare Zone ID for DNS blocking
   stripeCustomerId: varchar("stripe_customer_id"),
   mercadopagoCustomerId: varchar("mercadopago_customer_id"),
   subscriptionStatus: varchar("subscription_status", { length: 50 }).default("trial"), // trial, active, canceled
