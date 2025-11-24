@@ -31,6 +31,7 @@ function Router() {
         <Route path="/login" component={Login} />
         <Route path="/signup" component={Signup} />
         <Route path="/forgot-password" component={ForgotPassword} />
+        <Route path="/pricing" component={Pricing} />
         <Route component={NotFound} />
       </Switch>
     );
