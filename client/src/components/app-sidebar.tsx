@@ -7,7 +7,6 @@ import {
   FileText,
   Cloud,
   LogOut,
-  Cable,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import {
@@ -40,11 +39,6 @@ const userMenuItems = [
     title: "Configuração de Rede",
     url: "/whitelist",
     icon: Network,
-  },
-  {
-    title: "Configuração de Proxy",
-    url: "/proxy-setup",
-    icon: Cable,
   },
   {
     title: "Configurar Cloudflare",

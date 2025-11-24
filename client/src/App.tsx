@@ -16,7 +16,6 @@ import ForgotPassword from "@/pages/forgot-password";
 import Home from "@/pages/home";
 import Domains from "@/pages/domains";
 import Whitelist from "@/pages/whitelist";
-import ProxySetup from "@/pages/proxy-setup";
 import CloudflareSetup from "@/pages/cloudflare-setup";
 import AdminClients from "@/pages/admin-clients";
 import AdminUsers from "@/pages/admin-users";
@@ -52,7 +51,6 @@ function Router() {
               <Route path="/" component={Home} />
               <Route path="/domains" component={Domains} />
               <Route path="/whitelist" component={Whitelist} />
-              <Route path="/proxy-setup" component={ProxySetup} />
               <Route path="/cloudflare-setup" component={CloudflareSetup} />
               <Route path="/admin/clients" component={AdminClients} />
               <Route path="/admin/users" component={AdminUsers} />
