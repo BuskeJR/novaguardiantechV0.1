@@ -796,6 +796,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
         publicIp: publicIp || null,
       });
 
+      // AUTOMATICAMENTE adiciona o IP público à whitelist quando é configurado
+      if (publicIp) {
+        // Verifica se já existe na whitelist
+        const existingWhitelist = await storage.getIpWhitelistByTenantId(tenant.id);
+        const ipExists = existingWhitelist.some(ip => ip.ipAddress === publicIp);
+
+        if (!ipExists) {
+          // Adiciona automaticamente à whitelist
+          await storage.createIpWhitelist({
+            ipAddress: publicIp,
+            label: "IP Público - Automático",
+            tenantId: tenant.id,
+          } as any);
+
+          await createAuditLog(
+            user.id,
+            tenant.id,
+            "ip_auto_added",
+            "ip_whitelist",
+            null,
+            { ipAddress: publicIp, reason: "Automatic from public IP config" }
+          );
+        }
+      } else if (publicIp === null) {
+        // Se remover o IP público, remove da whitelist também
+        const existingWhitelist = await storage.getIpWhitelistByTenantId(tenant.id);
+        for (const ip of existingWhitelist) {
+          if (ip.label === "IP Público - Automático") {
+            await storage.deleteIpWhitelist(ip.id);
+            
+            await createAuditLog(
+              user.id,
+              tenant.id,
+              "ip_auto_removed",
+              "ip_whitelist",
+              ip.id,
+              { ipAddress: ip.ipAddress, reason: "Automatic removal when public IP cleared" }
+            );
+          }
+        }
+      }
+
       await createAuditLog(
         user.id,
         tenant.id,
@@ -909,6 +951,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
+    }
+  });
+
+  // ===== BLOCK CHECK API (para testar se domínio é bloqueado para um IP) =====
+  // GET /api/block-check?domain=example.com&ip=1.2.3.4
+  app.get("/api/block-check", async (req: Request, res: Response) => {
+    try {
+      const { domain, ip } = req.query;
+
+      if (!domain || typeof domain !== "string") {
+        return res.status(400).json({ 
+          success: false, 
+          error: "Domínio obrigatório",
+          blocked: false 
+        });
+      }
+
+      if (!ip || typeof ip !== "string") {
+        return res.status(400).json({ 
+          success: false, 
+          error: "IP obrigatório",
+          blocked: false 
+        });
+      }
+
+      const normalizedDomain = domain.toLowerCase();
+      const tenants = await storage.getAllTenants();
+
+      // Procura se este IP está associado a algum tenant
+      for (const tenant of tenants) {
+        if (!tenant.isActive) continue;
+
+        // Verifica se o IP está na whitelist deste tenant
+        const whitelistIps = await storage.getIpWhitelistByTenantId(tenant.id);
+        const ipWhitelisted = whitelistIps.some(w => w.ipAddress === ip);
+
+        if (ipWhitelisted) {
+          // IP está na whitelist, verifica se domínio está bloqueado
+          const rules = await storage.getDomainRulesByTenantId(tenant.id);
+
+          const isBlocked = rules.some(rule => {
+            if (rule.status !== "active") return false;
+
+            const ruleDomain = rule.domain.toLowerCase();
+
+            // Match exato
+            if (ruleDomain === normalizedDomain) return true;
+
+            // Wildcard: se tiktok.com bloqueado, *.tiktok.com também é
+            if (normalizedDomain === `www.${ruleDomain}`) return true;
+            if (normalizedDomain.endsWith(`.${ruleDomain}`)) return true;
+
+            return false;
+          });
+
+          if (isBlocked) {
+            return res.json({
+              success: true,
+              domain: normalizedDomain,
+              ip: ip,
+              blocked: true,
+              message: `Domínio ${domain} está bloqueado para este IP`,
+            });
+          }
+        }
+      }
+
+      // Se não encontrou bloqueio, retorna não bloqueado
+      res.json({
+        success: true,
+        domain: normalizedDomain,
+        ip: ip,
+        blocked: false,
+        message: `Domínio ${domain} não está bloqueado`,
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        blocked: false,
+      });
     }
   });
 

@@ -24,19 +24,27 @@
 
 **Infrastructure:**
 - PostgreSQL (Neon serverless)
-- UDP DNS Server (dns2 library)
-- Port 53 for DNS queries (production-ready)
+- Port 5000 for API
+- Stateless, scalable architecture
 
 ### System Flow
 
 ```
-User → Login (Replit Auth) → Dashboard → Manage Domains/Whitelist
-                                ↓
-                          Backend API (Express)
-                                ↓
-                          PostgreSQL Database
-                                ↓
-                          DNS Config Updates
+Cliente com IP Público
+    ↓
+Cadastra IP na plataforma ("Seu IP Público")
+    ↓
+IP automaticamente vai pra whitelist
+    ↓
+Cliente adiciona domínios bloqueados
+    ↓
+Backend API (Express)
+    ↓
+PostgreSQL Database
+    ↓
+Verificação: IP na whitelist? → Domínio bloqueado?
+    ↓
+Resposta: /api/block-check retorna true/false
 ```
 
 ## 📊 Data Model
@@ -50,6 +58,7 @@ User → Login (Replit Auth) → Dashboard → Manage Domains/Whitelist
 **tenants** - Client organizations (multi-tenant isolation)
 - Fields: id, name, slug, ownerId, isActive, publicIp, subscriptionStatus, timestamps
 - Relations: belongs to user (owner), has many domains/whitelist/audit logs
+- **New Feature**: publicIp campo que automaticamente adiciona o IP à whitelist
 
 **domain_rules** - Blocked domains per tenant
 - Fields: id, tenantId, domain, kind (exact/regex), status (active/inactive), reason, timestamps
@@ -58,6 +67,7 @@ User → Login (Replit Auth) → Dashboard → Manage Domains/Whitelist
 **ip_whitelist** - Authorized IP addresses per tenant
 - Fields: id, tenantId, ipAddress, label, timestamps
 - Relations: belongs to tenant, created by user
+- **Auto-populated**: Quando cliente coloca publicIp, é adicionado automaticamente com label "IP Público - Automático"
 
 **audit_logs** - Complete audit trail
 - Fields: id, actorUserId, tenantId, action, resourceType, resourceId, payloadJson, timestamp
@@ -107,10 +117,11 @@ Based on `design_guidelines.md`:
    - Support for exact match and regex patterns
    - Reason tracking for each block
 
-4. **IP Whitelisting**
-   - Manage authorized IP addresses
-   - Label IPs for easy identification
-   - Per-tenant whitelist isolation
+4. **IP Whitelisting & Auto-Configuration** (NEW! 🎯)
+   - Client adds IP Public → automatically added to whitelist
+   - Label: "IP Público - Automático"
+   - Removing publicIp also removes from whitelist
+   - Manual IP addition still available
 
 5. **Admin Panel**
    - Manage all client tenants
@@ -138,14 +149,12 @@ Based on `design_guidelines.md`:
    - Professional HTML email templates
    - Currently using: scnovatec@gmail.com (can upgrade to custom domain)
 
-9. **DNS Blocking System (NEW!) 🎯**
-   - UDP DNS server on port 53 (production-ready)
-   - Real-time domain blocking (responds with 127.0.0.1)
-   - In-memory cache with 5-minute refresh from database
-   - Automatic wildcard subdomain blocking
-   - Supports active/inactive domain toggle
-   - Fallback to public DNS (8.8.8.8) for non-blocked domains
-   - Complete setup guide in web interface
+9. **Block Check API** (NEW! 🎯)
+   - GET /api/block-check?domain=example.com&ip=1.2.3.4
+   - Returns: { blocked: true/false, message: string }
+   - Validates IP is in whitelist
+   - Checks if domain is blocked for that tenant
+   - Can be used by external DNS forwarders or clients
 
 ### Pending Implementation
 
@@ -176,8 +185,7 @@ Based on `design_guidelines.md`:
 │   │   │   ├── landing.tsx        # Public landing page
 │   │   │   ├── home.tsx           # User dashboard
 │   │   │   ├── domains.tsx        # Domain management
-│   │   │   ├── whitelist.tsx      # IP whitelist
-│   │   │   ├── dns-setup.tsx      # DNS configuration guide
+│   │   │   ├── whitelist.tsx      # Network configuration (IP + auto-whitelist)
 │   │   │   ├── admin-clients.tsx  # Admin: manage clients
 │   │   │   ├── admin-audit.tsx    # Admin: audit logs
 │   │   │   └── not-found.tsx      # 404 page
@@ -192,7 +200,6 @@ Based on `design_guidelines.md`:
 │   ├── index-prod.ts        # Production server
 │   ├── routes.ts            # API route definitions
 │   ├── storage.ts           # Data access layer
-│   ├── dns.ts               # UDP DNS server implementation
 │   ├── email.ts             # SendGrid email integration
 │   ├── auth-utils.ts        # Password hashing & validation
 │   ├── cloudflare.ts        # Cloudflare API integration
@@ -231,7 +238,7 @@ All React components and pages built with:
 - Database migrations with Drizzle ORM
 - Password reset via email flow
 
-### Phase 2: Backend, Email & DNS ✅ COMPLETE
+### Phase 2: Backend & Email ✅ COMPLETE
 
 Completed:
 - ✅ User authentication (signup/login with password)
@@ -241,9 +248,9 @@ Completed:
 - ✅ Database foreign key constraints (SET NULL for soft deletions)
 - ✅ Audit logging system
 - ✅ All REST API endpoints
-- ✅ **UDP DNS server on port 53** - Production-ready DNS blocking
-- ✅ **DNS Setup guide page** - Complete configuration instructions
-- ✅ **Real-time domain blocking** - 127.0.0.1 responses
+- ✅ **Auto-whitelist on publicIp** - Client adds IP → automatically in whitelist
+- ✅ **Block Check API** - Verify if domain blocked for IP
+- ✅ Multi-tenant isolation complete
 
 ### Phase 3: Payment & Advanced Features (NEXT)
 
@@ -259,8 +266,8 @@ Completed:
 **Data Test IDs:** All interactive elements have `data-testid` attributes for automated testing.
 
 Examples:
-- `button-login` - Login button
-- `input-domain` - Domain input field
+- `button-save-public-ip` - Save IP button
+- `input-public-ip` - IP input field
 - `row-domain-{id}` - Domain table row
 - `text-page-title` - Page title
 
@@ -289,29 +296,22 @@ NODE_ENV=development
 
 ## 🎯 Next Steps
 
-1. **Complete Backend Implementation**
-   - Set up Replit Auth with session management
-   - Implement all API endpoints
-   - Create database migrations
-   - Add sample seed data
+1. **Test Block Check API**
+   - Try: GET /api/block-check?domain=example.com&ip=203.0.113.42
+   - Verify it returns correct blocked status
 
-2. **Integrate Frontend with Backend**
-   - Connect TanStack Query to real APIs
-   - Test all user flows
-   - Add error handling
+2. **Implement Client Integration**
+   - Create SDK/script that clients use
+   - Script calls /api/block-check for each DNS query
+   - Blocks locally if API says blocked
 
-3. **DNS System**
-   - Implement DNS config file generation
-   - Add webhook/queue system for updates
-   - Document deployment for production
+3. **Advanced Features**
+   - Stripe Integration for payments
+   - Real-time statistics dashboard
+   - Cloudflare advanced zone features
 
-4. **Stripe Integration**
-   - Add subscription management
-   - Webhook handlers for payment events
-   - Trial period logic
-
-5. **Production Deployment**
-   - Deploy to Replit (or DigitalOcean)
+4. **Production Deployment**
+   - Deploy to Replit or DigitalOcean
    - Configure environment variables
    - Set up monitoring and logging
    - Create deployment documentation
@@ -336,42 +336,52 @@ NODE_ENV=development
 - Requires SendGrid domain verification (add DKIM/SPF records)
 - No code changes needed - just update environment variable
 
-## 🌐 DNS System Architecture
+## 🌐 Block Check API Usage
 
-The DNS blocking system runs in parallel with Express API on port 53:
+The /api/block-check endpoint can be used by external systems to verify if a domain should be blocked:
 
+### Request
 ```
-Client Network ──┐
-                 │ (port 53)
-                 └→ UDP DNS Server
-                    ├─ Query: tiktok.com?
-                    ├─ Check: Is blocked? YES
-                    └─ Response: 127.0.0.1 (blocked)
-                    
-                 Query: google.com?
-                 Check: Is blocked? NO
-                 └─ Fallback: Forward to 8.8.8.8
+GET /api/block-check?domain=tiktok.com&ip=203.0.113.42
 ```
 
-**Key Features:**
-- Uses `dns2` library for UDP socket handling
-- In-memory cache of blocked domains (refreshed every 5 minutes)
-- Reads from `domain_rules` table via storage interface
-- Supports exact match and wildcard blocking
-- Graceful fallback for non-blocked domains
-- Automatic port 53 binding (requires sudo/admin on production)
+### Response (Blocked)
+```json
+{
+  "success": true,
+  "domain": "tiktok.com",
+  "ip": "203.0.113.42",
+  "blocked": true,
+  "message": "Domínio tiktok.com está bloqueado para este IP"
+}
+```
+
+### Response (Not Blocked)
+```json
+{
+  "success": true,
+  "domain": "google.com",
+  "ip": "203.0.113.42",
+  "blocked": false,
+  "message": "Domínio google.com não está bloqueado"
+}
+```
+
+**How It Works:**
+1. Client queries: Is domain X blocked for IP Y?
+2. API checks: Is IP Y in any tenant's whitelist?
+3. If yes: Is domain X in that tenant's blocked domains?
+4. Returns true/false
 
 ---
 
-**Last Updated:** 2025-11-23 22:47
-**Status:** Phase 1 Complete ✅ | Phase 2 Complete ✅ | Phase 3 Next (MercadoPago Payment)
+**Last Updated:** 2025-11-24 00:05
+**Status:** Phase 2 Complete ✅ | Phase 3 Next (MercadoPago Payment)
 
 **Latest Changes:**
-- ✅ DNS server implemented with UDP port 53 (2025-11-23)
-- ✅ Real-time domain blocking working (127.0.0.1 responses)
-- ✅ DNS setup guide page added to interface
-- ✅ In-memory cache with database sync every 5 minutes
-- ✅ Sidebar navigation updated with DNS setup link
-- ✅ SendGrid email integration implemented
-- ✅ Password reset email flow working end-to-end
-- ✅ Foreign key constraints fixed (no CASCADE issues)
+- ✅ Auto-whitelist on publicIp configuration (2025-11-24)
+- ✅ Block Check API endpoint added (GET /api/block-check)
+- ✅ Simplified UI: one click to configure IP
+- ✅ Whitelist automatically updated when IP added/removed
+- ✅ Multi-tenant isolation fully working
+- ✅ Ready for external client integration

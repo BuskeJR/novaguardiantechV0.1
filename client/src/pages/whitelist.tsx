@@ -162,17 +162,30 @@ export default function Whitelist() {
         <div>
           <h1 className="text-3xl font-bold" data-testid="text-page-title">Configuração de Rede</h1>
           <p className="text-muted-foreground mt-1">
-            Gerencie seu IP Público e lista branca de endereços
+            Configure seu IP Público e veja os IPs autorizados
           </p>
         </div>
       </div>
+
+      {/* Info Card */}
+      <Card className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
+        <CardHeader>
+          <CardTitle className="text-lg">Como Funciona</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2 text-sm">
+          <p>✓ Coloque seu IP Público abaixo</p>
+          <p>✓ Automaticamente será adicionado à lista branca</p>
+          <p>✓ Qualquer domínio que você adicionar em "Domínios Bloqueados" será bloqueado para sua rede</p>
+          <p className="font-semibold mt-2">Nenhuma configuração adicional necessária!</p>
+        </CardContent>
+      </Card>
 
       {/* IP Público Configuration */}
       <Card>
         <CardHeader>
           <CardTitle>Seu IP Público</CardTitle>
           <CardDescription>
-            Configure o endereço IP público da sua rede para a proteção de DNS
+            Digite o IP público da sua rede (encontre em: https://meuip.com.br)
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -205,8 +218,8 @@ export default function Whitelist() {
             )}
           </div>
           {(publicIp || tenant?.publicIp) && (
-            <p className="text-sm text-muted-foreground mt-2">
-              IP Configurado: <span className="font-mono font-semibold">{publicIp || tenant?.publicIp}</span>
+            <p className="text-sm text-green-600 dark:text-green-400 mt-3 font-semibold">
+              ✓ IP Ativo: <span className="font-mono">{publicIp || tenant?.publicIp}</span>
             </p>
           )}
         </CardContent>
@@ -215,14 +228,14 @@ export default function Whitelist() {
       {/* Whitelist */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Lista Branca de IPs</h2>
+          <h2 className="text-2xl font-bold">IPs na Whitelist</h2>
           <p className="text-muted-foreground mt-1">
-            IPs autorizados para acesso ao DNS
+            IPs que terão seus domínios bloqueados
           </p>
         </div>
         <Button onClick={() => setIsAddDialogOpen(true)} data-testid="button-add-ip">
           <Plus className="h-4 w-4 mr-2" />
-          Adicionar IP
+          Adicionar IP Manual
         </Button>
       </div>
 
