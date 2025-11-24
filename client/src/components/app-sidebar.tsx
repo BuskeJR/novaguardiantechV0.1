@@ -5,8 +5,8 @@ import {
   Network,
   Users,
   FileText,
-  Cloud,
   LogOut,
+  DollarSign,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import {
@@ -39,6 +39,11 @@ const userMenuItems = [
     title: "Configuração de Rede",
     url: "/whitelist",
     icon: Network,
+  },
+  {
+    title: "Planos e Preços",
+    url: "/pricing",
+    icon: DollarSign,
   },
 ];
 

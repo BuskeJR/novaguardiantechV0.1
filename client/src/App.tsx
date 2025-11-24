@@ -16,6 +16,7 @@ import ForgotPassword from "@/pages/forgot-password";
 import Home from "@/pages/home";
 import Domains from "@/pages/domains";
 import Whitelist from "@/pages/whitelist";
+import Pricing from "@/pages/pricing";
 import AdminClients from "@/pages/admin-clients";
 import AdminUsers from "@/pages/admin-users";
 import AdminAudit from "@/pages/admin-audit";
@@ -50,6 +51,7 @@ function Router() {
               <Route path="/" component={Home} />
               <Route path="/domains" component={Domains} />
               <Route path="/whitelist" component={Whitelist} />
+              <Route path="/pricing" component={Pricing} />
               <Route path="/admin/clients" component={AdminClients} />
               <Route path="/admin/users" component={AdminUsers} />
               <Route path="/admin/audit" component={AdminAudit} />
