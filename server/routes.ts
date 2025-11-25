@@ -560,7 +560,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           ownerId: newUser.id,
           isActive: true,
           publicIp: null,
-          dnsConfigPath: null,
           stripeCustomerId: null,
           subscriptionStatus: "trial",
         });
