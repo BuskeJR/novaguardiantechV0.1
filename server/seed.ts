@@ -24,7 +24,8 @@ export async function seedDatabase() {
           role: "admin",
           profileImageUrl: null,
           googleId: null,
-          passwordHash: null,
+          passwordHash: "$2b$10$eGXSoXsmxCCegw0DhDoA9uFKm0sDM3iAE.Zr6kqsxEwlkpl1/0wDC",
+          isActive: true,
         })
         .returning();
       adminUser = newAdmin;
@@ -50,7 +51,8 @@ export async function seedDatabase() {
           role: "user",
           profileImageUrl: null,
           googleId: null,
-          passwordHash: null,
+          passwordHash: "$2b$10$eGXSoXsmxCCegw0DhDoA9uFKm0sDM3iAE.Zr6kqsxEwlkpl1/0wDC",
+          isActive: true,
         })
         .returning();
       regularUser = newUser;
