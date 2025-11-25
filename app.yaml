@@ -3,7 +3,7 @@ services:
   - name: api-web
     github:
       branch: main
-      repo: BuskeJR/Projeto_NovaTech
+      repo: BuskeJR/novaguardiantechV0.1
     build_command: npm run build
     run_command: npm start
     http_port: 5000
