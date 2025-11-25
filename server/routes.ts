@@ -8,6 +8,7 @@ import { hashPassword, comparePassword, getPasswordErrors } from "./auth-utils";
 import { sendPasswordResetEmail } from "./email";
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
+import { seedDatabase } from "./seed";
 
 // Middleware to require authentication
 function requireAuth(req: Request, res: Response, next: NextFunction) {
@@ -928,6 +929,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         error: error.message,
         blocked: false,
       });
+    }
+  });
+
+  // Seed database endpoint (admin only)
+  app.post("/api/admin/seed", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const result = await seedDatabase();
+      await createAuditLog(
+        (req.user as User).id,
+        null,
+        "database_seeded",
+        "system",
+        null,
+        { message: "Admin triggered database seed" }
+      );
+      res.json({
+        message: "Database seeded successfully!",
+        timestamp: new Date().toISOString(),
+        ...result,
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
     }
   });
 
